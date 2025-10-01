@@ -1,0 +1,135 @@
+﻿<Window x:Class="SQLBasic_net.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:local="clr-namespace:SQLBasic_net"
+        mc:Ignorable="d"
+        Title="SQLBasic.net" Height="500" Width="850">
+    <Window.Resources>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <!-- トラック部分 -->
+            <Setter Property="Foreground" Value="#555"/>
+            <!-- グリップ -->
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style TargetType="Thumb">
+            <Setter Property="Background" Value="#555"/>
+            <Setter Property="BorderBrush" Value="#777"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="F4" Command="{Binding ClearCommand}" />
+        <KeyBinding Key="F5" Command="{Binding ExecuteCommand}" />
+        <!-- Ctrl+S: 保存 -->
+        <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveCommand}"/>
+        <!-- Alt+C:  色 -->
+        <KeyBinding Modifiers="Alt" Key="C" Command="{Binding SetSytaxCommand}"/>
+        <!-- Ctrl+I: 選択範囲インデント -->
+        <KeyBinding Modifiers="Control" Key="I" Command="{Binding ReindentSelectionCommand}"/>
+        <!-- Alt+F: 文書全体整形 -->
+        <KeyBinding Modifiers="Alt" Key="F" Command="{Binding FormatDocumentCommand}"/>
+    </Window.InputBindings>
+    <Grid Background="#1E1E1E">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="20"/>
+        </Grid.RowDefinitions>
+        <ToolBarTray Grid.Row="0" Background="#2D2D30">
+            <ToolBar Background="#606060" BorderThickness="0" Padding="10,5">
+                <!-- 実行ボタン（強調） -->
+                <Button Command="{Binding ExecuteCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="▶" Foreground="#3CB371" FontWeight="Bold"/>
+                        <TextBlock Text=" 実行 (F5)" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <!-- ファイル操作系 -->
+                <Button Content="📄 新規 (F4)" Command="{Binding ClearCommand}"  Foreground="White" Margin="2,0" Padding="8,4"/>
+                <Button Content="💾 保存(Ctrl+S)" Command="{Binding SaveCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
+                <Separator/>
+                <!-- 表示設定系 -->
+                <Button Content="🎨 カラー(Alt+C)" Command="{Binding SetSytaxCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
+
+                <TextBlock Text="フォント" Foreground="White" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="🔼" Command="{Binding FontToLargeCommand}"  Margin="2,0" Padding="5,2"/>
+                    <Button Content="🔽" Command="{Binding FontToSmallCommand}"  Margin="2,0" Padding="5,2"/>
+                </StackPanel>
+                <Separator/>
+                <Button Content="整形(Alt+F)"  Command="{Binding FormatDocumentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
+            </ToolBar>
+        </ToolBarTray>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="10*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition MinHeight="10"/>
+                    <RowDefinition Height="20"/>
+                </Grid.RowDefinitions>
+                <avalonEdit:TextEditor
+                Grid.Row="0" Margin="6,5,4,5"
+                Document ="{Binding SqlDocument, Mode=TwoWay}"
+                FontSize="{Binding FontSize}"
+                FontFamily="Consolas"
+                ShowLineNumbers ="True"
+                Foreground="White"
+                Background="{Binding EditorBackground}"
+                SyntaxHighlighting="{Binding SyntaxSet}"
+                />
+                <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="10" HorizontalAlignment="Stretch" Background="DarkGray"/>
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="25"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="結果一覧" Foreground="White" VerticalAlignment="Bottom"/>
+                    <DataGrid Grid.Row="1" x:Name="QueryGrid" ItemsSource="{Binding GridItems}" HeadersVisibility="Column" 
+                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333" 
+                          RowBackground="Black" 
+                          GridLinesVisibility="None"
+                          AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="BorderBrush" Value="#444"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                    </DataGrid>
+                </Grid>
+            </Grid>
+            <Grid Grid.Column="1" Background="#2D2D30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="5,0,5,0">
+                    <TextBlock  Text="テーブル一覧" VerticalAlignment="Bottom" Foreground="White"/>
+                </Grid>
+                <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" Margin="5,0,5,0"/>
+            </Grid>
+        </Grid>
+        <StatusBar Grid.Row="2" Background="#2D2D30" Foreground="White">
+            <StatusBarItem Content="件数:"/>
+            <StatusBarItem Content="{Binding DataNum}"/>
+            <StatusBarItem Content="件"/>
+            <Separator/>
+            <StatusBarItem Content="メッセージ:"/>
+            <StatusBarItem Content="{Binding SQLMessage}"/>
+        </StatusBar>
+    </Grid>
+</Window>
