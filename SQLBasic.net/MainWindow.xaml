@@ -73,20 +73,20 @@
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="10*"/>
+                    <RowDefinition Height="{Binding EditorRowHeight}"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition MinHeight="10"/>
+                    <RowDefinition Height="{Binding ResultRowHeight}"/>
                     <RowDefinition Height="20"/>
                 </Grid.RowDefinitions>
                 <avalonEdit:TextEditor
-                Grid.Row="0" Margin="6,5,4,5"
-                Document ="{Binding SqlDocument, Mode=TwoWay}"
-                FontSize="{Binding FontSize}"
-                FontFamily="Consolas"
-                ShowLineNumbers ="True"
-                Foreground="White"
-                Background="{Binding EditorBackground}"
-                SyntaxHighlighting="{Binding SyntaxSet}"
+                    Grid.Row="0" Margin="6,3,4,7"
+                    Document ="{Binding SqlDocument, Mode=TwoWay}"
+                    FontSize="{Binding FontSize}"
+                    FontFamily="Consolas"
+                    ShowLineNumbers ="True"
+                    Foreground="White"
+                    Background="{Binding EditorBackground}"
+                    SyntaxHighlighting="{Binding SyntaxSet}"
                 />
                 <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="10" HorizontalAlignment="Stretch" Background="DarkGray"/>
                 <Grid Grid.Row="2">

@@ -11,6 +11,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using SQLBasic_net.Services;
 using SQLBasic_net.Views;
 using static System.Net.Mime.MediaTypeNames;
+using System.Security.Principal;
 
 namespace SQLBasic_net;
 
@@ -31,6 +32,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    [ObservableProperty]
+    private System.Windows.GridLength _EditorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
+    private System.Windows.GridLength _ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
 
     [ObservableProperty]
     private Brush _EditorBackground = new SolidColorBrush(Colors.Black);
@@ -168,6 +172,10 @@ public partial class MainWindowViewModel : ObservableObject
                         GridItems.Add(expando);
                     }
                     DataNum = GridItems.Count;
+
+                    //結果グリッドの列幅を計算
+
+
                 });
             }
         }
