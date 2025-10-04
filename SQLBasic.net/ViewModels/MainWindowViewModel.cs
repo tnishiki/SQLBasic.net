@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Dynamic;
+using System.IO;
 using System.Windows.Media;
 using System.Xml;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,8 +8,15 @@ using CommunityToolkit.Mvvm.Input;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Highlighting;
+using Microsoft.Win32;
 using SQLBasic_net.Services;
 using SQLBasic_net.Views;
+using System.Text;
+using CsvHelper;
+using System.Globalization;
+using System.Windows;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using CsvHelper.Configuration;
 
 namespace SQLBasic_net;
 
@@ -30,6 +38,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private System.Windows.GridLength _EditorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
+    [ObservableProperty]
     private System.Windows.GridLength _ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
 
     [ObservableProperty]
@@ -170,8 +179,19 @@ public partial class MainWindowViewModel : ObservableObject
                     DataNum = GridItems.Count;
 
                     //結果グリッドの列幅を計算
-
-
+                    // 結果グリッドの高さを自動調整
+                    if (DataNum > 0)
+                    {
+                        // 結果がある場合：結果グリッドを開く（例：エディタ3:結果2の比率）
+                        EditorRowHeight = new System.Windows.GridLength(3, System.Windows.GridUnitType.Star);
+                        ResultRowHeight = new System.Windows.GridLength(2, System.Windows.GridUnitType.Star);
+                    }
+                    else
+                    {
+                        // 結果がない場合：結果グリッドを閉じる
+                        EditorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
+                        ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
+                    }
                 });
             }
         }
@@ -247,6 +267,146 @@ public partial class MainWindowViewModel : ObservableObject
         {
             // パースできなかったときは何もしない（あるいはメッセージ表示）
             System.Diagnostics.Debug.WriteLine("Format error: " + ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    private async Task Open()
+    {
+        try
+        {
+            // ファイルダイアログを表示
+            var dialog = new OpenFileDialog
+            {
+                Title = "SQL ファイルを開く",
+                Filter = "SQL ファイル (*.sql)|*.sql|テキスト ファイル (*.txt)|*.txt|すべてのファイル (*.*)|*.*",
+                DefaultExt = ".sql",
+                AddExtension = true,
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                var text = File.ReadAllText(dialog.FileName, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+                // AvalonEdit に内容をセット取得（TextDocument）
+                SqlDocument.Text = text;
+            }
+        }
+        catch (Exception ex)
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SQLMessage = $"ファイルを開く際にエラーが発生しました。\n{ex.Message}";
+            });
+        }
+    }
+    [RelayCommand]
+    private async Task Save()
+    {
+        try
+        {
+            // 保存ダイアログを表示
+            var dialog = new SaveFileDialog
+            {
+                Title = "SQL ファイルの保存",
+                Filter = "SQL ファイル (*.sql)|*.sql|テキスト ファイル (*.txt)|*.txt|すべてのファイル (*.*)|*.*",
+                DefaultExt = ".sql",
+                FileName = $"{DateTime.Now.ToString("yyyy-MM-dd-HHmm_")}query.sql",
+                AddExtension = true,
+                OverwritePrompt = true
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                // AvalonEdit の内容を取得（TextDocument）
+                string sqlText = SqlDocument?.Text ?? string.Empty;
+
+                // UTF-8（BOMなし）で保存
+                File.WriteAllText(dialog.FileName, sqlText, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    SQLMessage = $"保存しました: {dialog.FileName}";
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SQLMessage = $"ファイル保存中にエラーが発生しました。\n{ex.Message}";
+            });
+        }
+    }
+    [RelayCommand]
+    private async Task CsvExport()
+    {
+        try
+        {
+            if (GridItems == null || GridItems.Count == 0)
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    SQLMessage = "エクスポートできるデータがありません。";
+                });
+                return;
+            }
+
+            // ファイル保存ダイアログ
+            var dialog = new SaveFileDialog
+            {
+                Title = "CSVファイルの保存",
+                Filter = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*",
+                DefaultExt = ".csv",
+                FileName = $"{DateTime.Now.ToString("yyyy-MM-dd-HHmm_")}query.csv",
+                AddExtension = true,
+                OverwritePrompt = true
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,              // ヘッダー行を出力
+                ShouldQuote = (field) => true, // 常にダブルクォーテーションで囲む
+                Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)
+            };
+            // UTF-8（BOM付き）で保存（Excel互換性のため）
+            using var writer = new StreamWriter(dialog.FileName, false, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            using var csv = new CsvWriter(writer, config);
+            bool headerWritten = false;
+
+            // GridItems は ExpandoObject のコレクション
+            foreach (IDictionary<string, object?> record in GridItems)
+            {
+                if (!headerWritten)
+                {
+                    foreach (var header in record.Keys)
+                    {
+                        csv.WriteField(header);
+                    }
+                    csv.NextRecord();
+                    headerWritten = true;
+                }
+
+                foreach (var kv in record)
+                {
+                    csv.WriteField(kv.Value);
+                }
+                csv.NextRecord();
+            }
+
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SQLMessage = $"CSVとしてエクスポートしました: {dialog.FileName}";
+            });
+        }
+        catch (Exception ex)
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SQLMessage = $"CSVエクスポート中にエラーが発生しました。\n{ex.Message}";
+            });
         }
     }
 
