@@ -393,4 +393,54 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return err.Message;
         }
     }
+    public IEnumerable<string> GetTableNamesOnEditor()
+    {
+        var tables = new List<string>();
+
+        try
+        {
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+
+            const string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;";
+
+            using var command = new SqliteCommand(sql, connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                tables.Add(reader.GetString(0));
+            }
+
+            return tables;
+        }
+        catch
+        {
+            throw new Exception("DB への接続に失敗しました");
+        }
+    }
+    public IEnumerable<string> GetColumnNamesOnEditor(string tableName)
+    {
+        var columns = new List<string>();
+        if (string.IsNullOrWhiteSpace(tableName))
+            return columns;
+        try
+        {
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+
+            using var command = new SqliteCommand($"PRAGMA table_info([{tableName}]);", connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                columns.Add(reader.GetString(1)); // name列（1番目のカラム名）
+            }
+        }
+        catch
+        {
+            throw new Exception("DB への接続に失敗しました");
+        }
+        return columns;
+    }
 }

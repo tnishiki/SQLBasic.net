@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         xmlns:local="clr-namespace:SQLBasic_net"
         mc:Ignorable="d"
@@ -79,6 +80,7 @@
                     <RowDefinition Height="20"/>
                 </Grid.RowDefinitions>
                 <avalonEdit:TextEditor
+                    x:Name="SqlEditor"
                     Grid.Row="0" Margin="6,3,4,7"
                     Document ="{Binding SqlDocument, Mode=TwoWay}"
                     FontSize="{Binding FontSize}"
@@ -86,8 +88,7 @@
                     ShowLineNumbers ="True"
                     Foreground="White"
                     Background="{Binding EditorBackground}"
-                    SyntaxHighlighting="{Binding SyntaxSet}"
-                />
+                    SyntaxHighlighting="{Binding SyntaxSet}"/>
                 <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="10" HorizontalAlignment="Stretch" Background="DarkGray"/>
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>

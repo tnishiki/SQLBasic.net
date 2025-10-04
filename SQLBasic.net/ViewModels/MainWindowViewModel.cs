@@ -12,6 +12,8 @@ using SQLBasic_net.Services;
 using SQLBasic_net.Views;
 using static System.Net.Mime.MediaTypeNames;
 using System.Security.Principal;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Text.RegularExpressions;
 
 namespace SQLBasic_net;
 
@@ -252,5 +254,50 @@ public partial class MainWindowViewModel : ObservableObject
             // パースできなかったときは何もしない（あるいはメッセージ表示）
             System.Diagnostics.Debug.WriteLine("Format error: " + ex.Message);
         }
+    }
+
+    public IEnumerable<string>? OnTextChanged(string documentText, int caretOffset)
+    {
+        if (coreService == null)
+        {
+            return null;
+        }
+
+        var context = GetContextAroundCaret(documentText, caretOffset);
+
+        // "." が入力されたらカラム補完
+        // "." 直後ならカラム補完
+        if (context.EndsWith("."))
+        {
+            var tableName = GetTableNameBeforeDot(documentText, caretOffset);
+            return coreService.GetColumnNamesOnEditor(tableName);
+        }
+        // FROM 直後にテーブル補完
+        else if (Regex.IsMatch(documentText, @"\bFROM\s+[a-zA-Z_]*$", RegexOptions.IgnoreCase))
+        {
+            return coreService.GetTableNamesOnEditor();
+        }
+        return null;
+    }
+    // カーソル前後の一部文字列を取得（文脈判定用）
+    private string GetContextAroundCaret(string text, int caretOffset, int contextLength = 6)
+    {
+        if (caretOffset <= 0 || string.IsNullOrEmpty(text))
+            return string.Empty;
+
+        int start = Math.Max(0, caretOffset - contextLength);
+        int length = Math.Min(contextLength, text.Length - start);
+        return text.Substring(start, length);
+    }
+
+    private string GetTableNameBeforeDot(string text,int caretOffset)
+    {
+        // caret の直前 50 文字くらいからテーブル名候補を探す
+        int start = Math.Max(0, caretOffset - 50);
+        string context = text.Substring(start, caretOffset - start);
+
+        // 例: "FROM student." → student
+        var match = Regex.Match(context, @"([a-zA-Z0-9_]+)\s*\.$", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value : string.Empty;
     }
 }
