@@ -21,9 +21,26 @@ namespace SQLBasic_net;
 
 public partial class MainWindowViewModel : ObservableObject
 {
+    #region 補完候補用のキーワード
+    private static readonly HashSet<string> SqlClauseKeywords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "on",
+        "using",
+        "where",
+        "group",
+        "order",
+        "inner",
+        "left",
+        "right",
+        "full",
+        "outer",
+        "cross",
+        "join"
+    };
+    #endregion
+
     [ObservableProperty]
     private double _FontSize = 16.0;
-
 
     [ObservableProperty]
     private TextDocument _SqlDocument = new TextDocument();
@@ -257,22 +274,6 @@ public partial class MainWindowViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine("Format error: " + ex.Message);
         }
     }
-
-    private static readonly HashSet<string> SqlClauseKeywords = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "on",
-        "using",
-        "where",
-        "group",
-        "order",
-        "inner",
-        "left",
-        "right",
-        "full",
-        "outer",
-        "cross",
-        "join"
-    };
 
     public IEnumerable<string>? OnTextChanged(string documentText, int caretOffset)
     {
