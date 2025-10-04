@@ -50,7 +50,7 @@ public partial class MainWindow : Window
 
                 var model = (MainWindowViewModel)DataContext;
                 int caretOffset = SqlEditor.TextArea.Caret.Offset;
-                var candidates = model.OnTextChanged(SqlEditor.Document.Text, caretOffset);
+                var candidates = model.GetCandicateDatabaseItem(SqlEditor.Document.Text, caretOffset);
                 if (candidates == null)
                 {
                     return;

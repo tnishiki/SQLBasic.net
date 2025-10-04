@@ -13,6 +13,5 @@ public interface ICoreService
     Brush GetSyntaxColor(int SyntaxNo);
     bool SetSyntaxColor(int SyntaxNo, Brush brush);
     string GetSytaxXml(string[]? colors);
-    IEnumerable<string> GetTableNamesOnEditor();
-    IEnumerable<string> GetColumnNamesOnEditor(string tableName);
+    IEnumerable<string>? GetCandicateDatabaseItem(string documentText, int caretOffset);
 }
