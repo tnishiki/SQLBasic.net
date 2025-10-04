@@ -2,7 +2,7 @@
 
 このプログラムは、SQLite 用の SQL エディタです。直感的なエディタでシンタックスハイライトや自動補完、SQL 整形を備え、実行結果を即座に確認できます。履歴管理とテンプレート登録により反復作業を効率化し、SQLite ファイルの生成も自動で行われます。複数ウィンドウでの比較や結果のエクスポートにも対応し、学習用途からプロトタイピングまで幅広く使えます。クラウド接続不要でローカル環境だけで完結し、設定項目も最小限に抑えられているため、導入してすぐに学習に集中できます。
 
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/c79c0bbd-9e50-4a02-8a0e-42b6dc20f1ab" />
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/5f29ec97-e990-4c52-8ea7-b5331723fe28" />
 
 ## 利用者の想定
 
