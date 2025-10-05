@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.36105.23 d17.13
+VisualStudioVersion = 17.13.36105.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLBasic_net", "SQLBasic.net\SQLBasic_net.csproj", "{A1AB1833-1B5D-4066-8BAB-48B97AF1B506}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLBasic_TestProject", "SQLBasic_TestProject\SQLBasic_TestProject.csproj", "{0C8B4085-0F01-47B3-AEC5-B92AA04699BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A1AB1833-1B5D-4066-8BAB-48B97AF1B506}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1AB1833-1B5D-4066-8BAB-48B97AF1B506}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1AB1833-1B5D-4066-8BAB-48B97AF1B506}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C8B4085-0F01-47B3-AEC5-B92AA04699BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C8B4085-0F01-47B3-AEC5-B92AA04699BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C8B4085-0F01-47B3-AEC5-B92AA04699BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C8B4085-0F01-47B3-AEC5-B92AA04699BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
