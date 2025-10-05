@@ -13,7 +13,7 @@ namespace SQLBasic_net.Services;
 public class MyCompletionData: ICompletionData
 {
     public MyCompletionData(string text) => Text = text;
-    public ImageSource Image => null;
+    public ImageSource? Image => null;
     public string Text { get; }
     public object Content => Text;
     public object Description => $"Column: {Text}";
