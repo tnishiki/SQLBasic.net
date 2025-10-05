@@ -123,14 +123,13 @@ order by
 from
   aaa as a
   left join (
-    select
-      b.id
-      , b.name
-    from
-      bbb as b
-    where
-      b.id = 8
-  ) as b on a.id = b.id
+  select
+    b.id
+    , b.name
+  from
+    bbb as b
+  where
+    b.id = 8) as b on a.id = b.id
 where
   a.id = 3
 order by
