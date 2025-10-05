@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text;
+using System.Linq;
 
 namespace SQLBasic_net.Services;
 
@@ -248,14 +249,15 @@ public sealed class Lexer
     }
 
     public sealed record SelectItem(Expr Expression, string? Alias);
-    public sealed record TableRef(IdentifierExpr Name, string? Alias);
+    public abstract record FromItem;
+    public sealed record NamedTable(IdentifierExpr Name, string? Alias) : FromItem;
+    public sealed record DerivedTable(SelectStatement Subquery, string Alias) : FromItem;
     public sealed record OrderByItem(Expr Expression, bool Descending);
-
     public enum JoinKind { Inner, Left, Right, Full }
-    public sealed record JoinClause(JoinKind Kind, TableRef Right, Expr On);
-    public sealed record FromClause(TableRef Base, IReadOnlyList<JoinClause> Joins);
+    public sealed record JoinClause(JoinKind Kind, FromItem Right, Expr On);
+    public sealed record FromClause(FromItem Base, IReadOnlyList<JoinClause> Joins);
 
-    public enum SelectResultModifier
+public enum SelectResultModifier
     {
         All,
         Distinct
@@ -276,7 +278,7 @@ public sealed class Lexer
 
 // DML AST
 public sealed record InsertStatement(
-    TableRef Into,
+    NamedTable Into,
     IReadOnlyList<string>? Columns,
     IReadOnlyList<IReadOnlyList<Expr>>? ValuesRows,
     SelectStatement? SelectSource
@@ -284,13 +286,13 @@ public sealed record InsertStatement(
 
 public sealed record Assignment(IdentifierExpr Column, Expr Value);
 public sealed record UpdateStatement(
-    TableRef Target,
+    NamedTable Target,
     IReadOnlyList<Assignment> SetList,
     Expr? Where
 ) : SqlStatement;
 
 public sealed record DeleteStatement(
-    TableRef From,
+    NamedTable From,
     Expr? Where
 ) : SqlStatement;
 
@@ -436,7 +438,7 @@ public sealed class Parser
         // Most dialects require INTO
         if (!Match(TokenKind.Into)) Expect(TokenKind.Into, "INTO expected");
 
-        var table = ParseTableRef();
+        var table = ParseNamedTable();
 
         // optional column list
         List<string>? columns = null;
@@ -485,7 +487,7 @@ public sealed class Parser
     private UpdateStatement ParseUpdateStatement(bool endWithEof)
     {
         Expect(TokenKind.Update, "UPDATE expected");
-        var target = ParseTableRef();
+        var target = ParseNamedTable();
         Expect(TokenKind.Set, "SET expected");
 
         var sets = new List<Assignment>();
@@ -511,7 +513,7 @@ public sealed class Parser
         Expect(TokenKind.Delete, "DELETE expected");
         // Optional FROM (we accept both: DELETE FROM t ... or DELETE t ...)
         if (!Match(TokenKind.From)) { /* tolerate absence */ }
-        var tr = ParseTableRef();
+        var tr = ParseNamedTable();
 
         Expr? where = null;
         if (Match(TokenKind.Where))
@@ -721,17 +723,25 @@ public sealed class Parser
 
     private FromClause ParseFromClause()
     {
-        var baseTable = ParseTableRef();
+        var baseTable = ParseFromItem();
         var joins = new List<JoinClause>();
         while (IsJoinStart(_cur.Kind))
         {
             var kind = ParseJoinKind();
-            var right = ParseTableRef();
+            var right = ParseFromItem();
             Expect(TokenKind.On, "JOIN requires ON <condition>");
             var on = ParseExpr();
             joins.Add(new JoinClause(kind, right, on));
         }
         return new FromClause(baseTable, joins);
+    }
+    private NamedTable ParseNamedTable()
+    {
+        var name = ParseIdentifier();
+        string? alias = null;
+        if (Match(TokenKind.As)) alias = ParseIdentifierSingle();
+        else if (_cur.Kind == TokenKind.Identifier) { alias = _cur.Text; Next(); }
+        return new NamedTable(name, alias);
     }
 
     private static bool IsJoinStart(TokenKind k)
@@ -747,13 +757,39 @@ public sealed class Parser
         throw Error($"JOIN keyword expected at {_cur.Position}");
     }
 
-    private TableRef ParseTableRef()
+    private FromItem ParseFromItem()
     {
-        var ident = ParseIdentifier();
+        // ( SELECT ... ) [AS] alias
+        if (_cur.Kind == TokenKind.LParen)
+        {
+            Next();
+            if (_cur.Kind != TokenKind.Select)
+                throw Error("Subquery in FROM must start with SELECT");
+            var sub = ParseSelectLike(endWithEof: false);
+            Expect(TokenKind.RParen, ") expected after subquery");
+
+            // 別名は必須（SQLiteもFROMサブクエリはエイリアス必須）
+            if (Match(TokenKind.As))
+            {
+                return new DerivedTable(sub, ParseIdentifierSingle());
+            }
+            else if (_cur.Kind == TokenKind.Identifier)
+            {
+                return new DerivedTable(sub, ParseIdentifierSingle());
+            }
+            else
+            {
+                throw Error("Alias is required for subquery in FROM");
+            }
+        }
+
+        // 通常のテーブル参照: ident[.ident[...]] [AS] alias?
+        var name = ParseIdentifier();
         string? alias = null;
         if (Match(TokenKind.As)) alias = ParseIdentifierSingle();
         else if (_cur.Kind == TokenKind.Identifier) { alias = _cur.Text; Next(); }
-        return new TableRef(ident, alias);
+
+        return new NamedTable(name, alias);
     }
 
     // --- Expressions ---
@@ -978,8 +1014,7 @@ public static class AstDumper
     {
         var sb = new StringBuilder();
         sb.Append("SELECT");
-        if (stmt.Modifier == SelectResultModifier.Distinct)
-            sb.Append(" DISTINCT");
+        if (stmt.Modifier == SelectResultModifier.Distinct) sb.Append(" DISTINCT");
         sb.AppendLine();
         for (int i = 0; i < stmt.Items.Count; i++)
         {
@@ -988,17 +1023,16 @@ public static class AstDumper
             if (!string.IsNullOrEmpty(it.Alias)) sb.Append(" AS ").Append(it.Alias);
             sb.AppendLine();
         }
+
         if (stmt.From is not null)
         {
-            sb.Append("FROM ").Append(stmt.From.Base.Name);
-            if (!string.IsNullOrEmpty(stmt.From.Base.Alias)) sb.Append(" AS ").Append(stmt.From.Base.Alias);
-            sb.AppendLine();
+            sb.Append("FROM ").Append(DumpFromItem(stmt.From.Base)).AppendLine();
             foreach (var j in stmt.From.Joins)
             {
-                sb.Append(JoinKindToSql(j.Kind)).Append(" JOIN ")
-                  .Append(j.Right.Name);
-                if (!string.IsNullOrEmpty(j.Right.Alias)) sb.Append(" AS ").Append(j.Right.Alias);
-                sb.Append(" ON ").Append(Dump(j.On)).AppendLine();
+                sb.Append(JoinKindToSql(j.Kind))
+                  .Append(" JOIN ")
+                  .Append(DumpFromItem(j.Right))
+                  .Append(" ON ").Append(Dump(j.On)).AppendLine();
             }
         }
         if (stmt.Where is not null)
@@ -1037,6 +1071,18 @@ public static class AstDumper
             sb.AppendLine();
         }
         return sb.ToString();
+    }
+    private static string DumpFromItem(FromItem item)
+    {
+        return item switch
+        {
+            NamedTable nt => nt.Alias is null
+                ? nt.Name.ToString()
+                : $"{nt.Name} AS {nt.Alias}",
+            DerivedTable dt =>
+                "(" + Dump(dt.Subquery).TrimEnd() + ") AS " + dt.Alias,
+            _ => item.ToString() ?? item.GetType().Name
+        };
     }
 
     public static string Dump(InsertStatement s)
