@@ -11,14 +11,18 @@ public static class SimpleSqlFormatter
     {
         var sb = new StringBuilder();
 
-        // 主要キーワードの前で改行
-        sql = Regex.Replace(sql, @"\b(select|from|where|order\s+by|group\s+by|having|join)\b",
-            m => "\n" + m.Value.ToLower() + "\n", RegexOptions.IgnoreCase);
+        // 1)主要キーワードの前で改行
+        sql = Regex.Replace(sql, @"\b(select|from|where|order\s+by|group\s+by|having)\b",
+            m => "\n" + m.Value + "\n", RegexOptions.IgnoreCase);
 
-        // カンマの後で改行
+        // 2)JOIN 句の直前で改行（LEFT/RIGHT/INNER [+ OUTER] JOIN をひとかたまりで扱う）
+        sql = Regex.Replace(sql, @"\b((left|right|inner)\s+(?:outer\s+)?join)\b",
+            m => "\n" + m.Value, RegexOptions.IgnoreCase);
+
+        // 3)カンマの後で改行
         sql = Regex.Replace(sql, @",", ",\n");
 
-        // ブロックコメントを独立行に整形
+        // 4)ブロックコメントを独立行に整形
         sql = Regex.Replace(sql, @"/\*([\s\S]*?)\*/",
             m =>
             {
@@ -28,7 +32,7 @@ public static class SimpleSqlFormatter
                 return "\n/*\n" + string.Join("\n", lines) + "\n*/\n";
             });
 
-        // 行ごとのインデント調整
+        // 5)行ごとのインデント調整
         var lines2 = sql.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
         bool inSelect = false;
         bool inWhere = false;
@@ -64,30 +68,32 @@ public static class SimpleSqlFormatter
             else if (line.StartsWith("/*"))
             {
                 // コメントはそのまま出力
-                sb.AppendLine(line);
+                sb.AppendLine(org);
             }
             else if (line.StartsWith("*/"))
             {
                 // コメントはそのまま出力
-                sb.AppendLine(line);
+                sb.AppendLine(org);
             }
             else if (inSelect)
             {
                 if (colIndex == 0)
-                    sb.AppendLine(new string(' ', IndentSpaceNum) + line.Trim(','));
+                    sb.AppendLine(new string(' ', IndentSpaceNum) + org.Trim(','));
                 else
-                    sb.AppendLine(new string(' ', IndentSpaceNum) + ", " + line.Trim(','));
+                    sb.AppendLine(new string(' ', IndentSpaceNum) + ", " + org.Trim(','));
                 colIndex++;
             }
             else if (inWhere)
             {
-                var split = Regex.Replace(org, @"\s+(?i:and)\s+", "\n" + new string(' ', IndentSpaceNum) + "and ", RegexOptions.IgnoreCase);
+                var split = Regex.Replace(
+                    org,
+                    @"\s+(?i:and)\s+", "\n" + new string(' ', IndentSpaceNum) + "and ", RegexOptions.IgnoreCase);
                 sb.AppendLine(new string(' ', IndentSpaceNum) + split);
                 inWhere = false;
             }
             else
             {
-                sb.AppendLine(new string(' ', IndentSpaceNum) + line);
+                sb.AppendLine(new string(' ', IndentSpaceNum) + org);
             }
         }
 
