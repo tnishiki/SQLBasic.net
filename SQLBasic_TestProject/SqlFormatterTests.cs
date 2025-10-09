@@ -33,7 +33,7 @@ public class SqlFormatterTests
      * シンプルなSELECT文のテスト
      */
     [Fact]
-    public void QueryTest01()
+    public void SQLFormatterTest01()
     {
         #region テストコード01
         var sql = "SELECT 1 AS Value from a";
@@ -57,7 +57,7 @@ from
      * WHERE、ORDER BY 句のテスト
      */
     [Fact]
-    public void QueryTest02()
+    public void SQLFormatterTest02()
     {
         #region テストコード02
         var sql = "SELECT a.item as T from aaa as a where a.id = 3 order by a.id";
@@ -86,7 +86,7 @@ order by
      * JOIN 句のテスト
      */
     [Fact]
-    public void QueryTest03()
+    public void SQLFormatterTest03()
     {
         #region テストコード03
         var sql = "SELECT a.item as T from aaa as a left join bbb as b on a.id = b.a_id where a.id = 3 order by a.id";
@@ -113,7 +113,7 @@ order by
     }
 
     [Fact]
-    public void QueryTest04()
+    public void SQLFormatterTest04()
     {
         #region テストコード04
         var sql = "SELECT a.item as T from aaa as a left join (select b.id, b.name from bbb as b where b.id = 8) as b on a.id = b.id where a.id = 3 order by a.id";

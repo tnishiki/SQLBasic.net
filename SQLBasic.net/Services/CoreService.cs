@@ -20,6 +20,8 @@ public class CoreService : ICoreService
     private const string JsonValueName = "json";
     #endregion
 
+    public string GetRegistryBasePath() => RegistryBasePath;
+
     #region Colors
     readonly Brush[] EditColor =
         {
