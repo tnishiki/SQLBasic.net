@@ -1,20 +1,31 @@
 # SQLBasic.net
 
-このプログラムは、SQLite 用の SQL エディタです。直感的なエディタでシンタックスハイライトや自動補完、SQL 整形を備え、実行結果を即座に確認できます。履歴管理とテンプレート登録により反復作業を効率化し、SQLite ファイルの生成も自動で行われます。複数ウィンドウでの比較や結果のエクスポートにも対応し、学習用途からプロトタイピングまで幅広く使えます。クラウド接続不要でローカル環境だけで完結し、設定項目も最小限に抑えられているため、導入してすぐに学習に集中できます。
+**SQLBasic.net** is an intuitive SQL editor for **SQLite**.
+It provides syntax highlighting, auto-completion, and SQL formatting, allowing you to instantly view query results.
+With built-in **history management** and **query templates**, repetitive tasks become more efficient, and SQLite database files are automatically generated when needed.
+You can compare queries across multiple windows, export results, and use it for everything from **learning SQL** to **rapid prototyping**.
+Because it runs entirely **offline without any cloud connection**, setup is minimal—allowing you to focus on learning immediately after installation.
 
 <img width="600" alt="image" src="https://github.com/user-attachments/assets/5f29ec97-e990-4c52-8ea7-b5331723fe28" />
 
-## 利用者の想定
+## Target Users
 
-SQL をこれから学ぼうとする人向けです。データベースのインストールや設定などをする必要はありません。
+This application is designed for **beginners who are just starting to learn SQL**.
+No database installation or configuration is required.
 
-SQLBasic.net を利用すれば、初心者でも面倒な環境構築を行うことなく SQL の学習を始められます。アプリを起動するだけで学習用の SQLite ファイルが自動生成され、テーブルやデータを気軽に作成しながら基本操作を体験できます。入力したクエリはシンタックスハイライトや補完機能に支えられているため、構文ミスを早期に発見でき、操作に不慣れな段階でも安心です。実行結果は同一画面内で確認でき、履歴から試行錯誤の過程を振り返れるので、理解度を確かめながら学習を進められます。さらに、教材やチュートリアルで紹介されるサンプルコードをそのまま貼り付けて試せるため、インプットとアウトプットを素早く往復できる点も大きな利点です。また、ダウンロードしたアプリはオフラインで動作するので、ネットワーク環境に左右されず自分のペースで練習でき、授業や勉強会でも統一した操作説明を行えます。
+With **SQLBasic.net**, you can start learning SQL right away without any complex setup.
+A dedicated SQLite file is automatically generated at startup, so you can easily create tables and data while experimenting with basic SQL operations.
+The syntax highlighting and auto-completion features help detect syntax errors early, providing a smooth experience even for first-time users.
+Execution results appear in the same window, and the built-in query history lets you review your learning process and track progress.
+You can also paste and run sample SQL code directly from tutorials or textbooks—making it easy to move quickly between **learning and practice**.
+Since the application works entirely **offline**, you can study at your own pace without depending on a network environment, and instructors can ensure consistent demonstrations across classrooms or workshops.
 
-## 動作環境
+## System Requirements
 
-* Windows 10/11
-* .NET 8.0 (Windows デスクトップ)
+* Windows 10 / 11
+* .NET 8.0 (Windows Desktop)
 
-## プログラムの起動
+## How to Launch
 
-立ち上げると指定のパスに自動的に SQLite ファイルを作成し、エディタ上で SQL クエリを実行することができます。
+When launched, the program automatically creates an SQLite database file at the specified path.
+You can then execute SQL queries directly within the built-in editor.
