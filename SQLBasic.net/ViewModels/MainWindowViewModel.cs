@@ -431,11 +431,11 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleSqlLineComment()
+    private void SetComment()
     {
         if (SqlEditor == null) return;
 
-        var (text, caretpos) = SetSqlLineComment(SqlDocument.Text,
+        var (text, caretpos) = coreService.SetSqlComment(SqlDocument.Text,
             SqlEditor.CaretOffset,
             SqlEditor.SelectionStart,
             SqlEditor.SelectionLength);
@@ -445,89 +445,5 @@ public partial class MainWindowViewModel : ObservableObject
             SqlDocument.Text = text;
         }
         SqlEditor.CaretOffset = caretpos;
-    }
-
-    public (string newText, int newCaretOffset) SetSqlLineComment(
-        string documentText, int caretOffset, int selectionStart, int selectionLength)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(documentText))
-                return (documentText, caretOffset);
-
-            // 改行コード統一
-            var lines = documentText;
-            if (lines == null)
-                return (documentText, caretOffset);
-
-            //現在の行の行頭位置を調べる
-            int startpos = 0;
-            if (selectionLength == 0)
-            {
-                startpos = caretOffset - 1;
-            }
-            else
-            {
-                startpos = selectionStart;
-            }
-
-            if (caretOffset == 0)
-            {
-                startpos = 0;
-            }
-            else if (2 < caretOffset && lines[caretOffset - 2] == '\r' && lines[caretOffset - 1] == '\n')
-            {
-                startpos = caretOffset;
-            }
-            else
-            {
-                for (; 0 <= startpos; startpos--)
-                {
-                    if (lines[startpos] == '\r' && lines[startpos + 1] == '\n')
-                    {
-                        startpos = startpos + 2;
-                        break;
-                    }
-                }
-            }
-            if (startpos < 0) startpos = 0;
-
-            if (selectionLength == 0)
-            {
-                var aftertarget = lines.Insert(startpos, "-- ");
-                return (aftertarget, caretOffset + 3);
-            }
-            else
-            {
-                var target = lines.Substring(startpos, selectionLength + selectionStart - startpos);
-                var aftertarget =
-                    lines.Substring(0, startpos) +
-                    Regex.Replace(target, "^", "-- ", RegexOptions.Multiline) +
-                    lines.Substring(selectionLength + selectionStart, lines.Length - selectionLength - selectionStart);
-                if(caretOffset == selectionStart)
-                {
-                    return (aftertarget, caretOffset + 3);
-                }
-                else
-                {
-                    return (aftertarget, caretOffset + aftertarget.Length - documentText.Length);
-                }
-            }
-        }
-        catch
-        {
-            return (documentText, caretOffset);
-        }
-    }
-
-    // 行のオフセットを求めるローカル関数
-    int GetLineOffset(string text, int lineIndex)
-    {
-        if (lineIndex <= 0) return 0;
-        int offset = 0;
-        var parts = text.Replace("\r\n", "\n").Split('\n');
-        for (int i = 0; i < lineIndex && i < parts.Length; i++)
-            offset += parts[i].Length + 1;
-        return offset;
     }
 }

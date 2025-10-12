@@ -627,5 +627,73 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         results.Sort(StringComparer.OrdinalIgnoreCase);
         return results;
     }
+    public (string newText, int newCaretOffset) SetSqlComment(
+        string documentText, int caretOffset, int selectionStart, int selectionLength)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(documentText))
+                return (documentText, caretOffset);
 
+            var lines = documentText;
+            if (lines == null)
+                return (documentText, caretOffset);
+
+            //現在の行の行頭位置を調べる
+            int startpos = 0;
+            if (selectionLength == 0)
+            {
+                startpos = caretOffset;
+            }
+            else
+            {
+                startpos = selectionStart;
+            }
+
+            if (startpos == lines.Length)
+            {
+                startpos = startpos - 2;
+            }
+
+            if (startpos != 0)
+            {
+                for (; 0 <= startpos; startpos--)
+                {
+                    if (lines[startpos] == '\r' && lines[startpos + 1] == '\n')
+                    {
+                        startpos = startpos + 2;
+                        break;
+                    }
+                }
+            }
+
+            if (startpos < 0) startpos = 0;
+
+            if (selectionLength == 0)
+            {
+                var aftertarget = lines.Insert(startpos, "-- ");
+                return (aftertarget, caretOffset + 3);
+            }
+            else
+            {
+                var target = lines.Substring(startpos, selectionLength + selectionStart - startpos);
+                var aftertarget =
+                    lines.Substring(0, startpos) +
+                    Regex.Replace(target, "^", "-- ", RegexOptions.Multiline) +
+                    lines.Substring(selectionLength + selectionStart, lines.Length - selectionLength - selectionStart);
+                if (caretOffset == selectionStart)
+                {
+                    return (aftertarget, caretOffset + 3);
+                }
+                else
+                {
+                    return (aftertarget, caretOffset + aftertarget.Length - documentText.Length);
+                }
+            }
+        }
+        catch
+        {
+            return (documentText, caretOffset);
+        }
+    }
 }
