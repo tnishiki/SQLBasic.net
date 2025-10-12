@@ -655,19 +655,21 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                 startpos = startpos - 2;
             }
 
-            if (startpos != 0)
+            if (startpos < 2)
             {
-                for (; 0 <= startpos; startpos--)
+                startpos = 0;
+            }
+            else
+            {
+                for (; 2 <= startpos; startpos--)
                 {
-                    if (lines[startpos] == '\r' && lines[startpos + 1] == '\n')
+                    if (lines[startpos - 2] == '\r' && lines[startpos - 1] == '\n')
                     {
-                        startpos = startpos + 2;
                         break;
                     }
                 }
+                if (startpos < 2) startpos = 0;
             }
-
-            if (startpos < 0) startpos = 0;
 
             if (selectionLength == 0)
             {
