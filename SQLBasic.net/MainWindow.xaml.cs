@@ -24,6 +24,8 @@ public partial class MainWindow : Window
 
         DataContext = mainWindowViewModel;
         mainWindowViewModel.win = this;
+
+        mainWindowViewModel.SqlEditor = SqlEditor;;
     }
 
     public void BuildColumns(List<string?> headers)

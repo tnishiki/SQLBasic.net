@@ -38,6 +38,8 @@
         <KeyBinding Modifiers="Control" Key="L" Command="{Binding CsvExportCommand}"/>
         <!-- Alt+F: 文書全体整形 -->
         <KeyBinding Modifiers="Alt" Key="F" Command="{Binding FormatDocumentCommand}"/>
+        <!-- Alt+C: コメントオン、オフ -->
+        <KeyBinding Modifiers="Ctrl" Key="K" Command="{Binding ToggleSqlLineCommentCommand}"/>
     </Window.InputBindings>
     <Grid Background="#1E1E1E">
         <Grid.RowDefinitions>
