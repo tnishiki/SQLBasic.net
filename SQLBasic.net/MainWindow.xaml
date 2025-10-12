@@ -7,7 +7,7 @@
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         xmlns:local="clr-namespace:SQLBasic_net"
         mc:Ignorable="d"
-        Title="SQLBasic.net" Height="500" Width="850">
+        Title="SQLBasic.net" Height="500" Width="1000">
     <Window.Resources>
         <Style TargetType="ScrollBar">
             <Setter Property="Background" Value="#2D2D30"/>
@@ -39,7 +39,7 @@
         <!-- Alt+F: 文書全体整形 -->
         <KeyBinding Modifiers="Alt" Key="F" Command="{Binding FormatDocumentCommand}"/>
         <!-- Alt+C: コメントオン、オフ -->
-        <KeyBinding Modifiers="Ctrl" Key="K" Command="{Binding ToggleSqlLineCommentCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="K" Command="{Binding SetCommentCommand}"/>
     </Window.InputBindings>
     <Grid Background="#1E1E1E">
         <Grid.RowDefinitions>
@@ -68,11 +68,12 @@
 
                 <TextBlock Text="フォント" Foreground="White" VerticalAlignment="Center" Margin="10,0,5,0"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="🔼" Command="{Binding FontToLargeCommand}"  Margin="2,0" Padding="5,2"/>
-                    <Button Content="🔽" Command="{Binding FontToSmallCommand}"  Margin="2,0" Padding="5,2"/>
+                    <Button Content="🔼" Command="{Binding FontToLargeCommand}"  Margin="2,0" Padding="2,2"/>
+                    <Button Content="🔽" Command="{Binding FontToSmallCommand}"  Margin="2,0" Padding="2,2"/>
                 </StackPanel>
                 <Separator/>
                 <Button Content="整形(Alt+F)"  Command="{Binding FormatDocumentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
+                <Button Content="コメント(Ctrl+K)"  Command="{Binding SetCommentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
             </ToolBar>
         </ToolBarTray>
         <Grid Grid.Row="1">
