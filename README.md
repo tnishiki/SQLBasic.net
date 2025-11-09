@@ -6,7 +6,7 @@ With built-in **history management** and **query templates**, repetitive tasks b
 You can compare queries across multiple windows, export results, and use it for everything from **learning SQL** to **rapid prototyping**.
 Because it runs entirely **offline without any cloud connection**, setup is minimal—allowing you to focus on learning immediately after installation.
 
-<img width="600" alt="image" src="https://github.com/user-attachments/assets/5f29ec97-e990-4c52-8ea7-b5331723fe28" />
+<img width="1234" height="617" alt="image" src="https://github.com/user-attachments/assets/068f58dd-5b3d-4a50-bc96-1b9a6593e69c" />
 
 ## Target Users
 
