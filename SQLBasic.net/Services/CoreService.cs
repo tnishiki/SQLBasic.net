@@ -160,6 +160,32 @@ public class CoreService : ICoreService
         }
         return result;
     }
+    public bool CheckOtherDB(string dbfilePath)
+    {
+        bool result = false;
+        try
+        {
+            //データベース設定
+            if (!File.Exists(dbfilePath))
+            {
+                return result;
+            }
+            connectionString = $"Data Source={dbfilePath}";
+            // データベースとテーブルの作成
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                result = true;
+            }
+        }
+        catch
+        {
+            throw new Exception("DB ファイルに接続できませんでした");
+        }
+        return result;
+    }
+
+
     public Brush GetSyntaxColor(int SyntaxNo)
     {
         try

@@ -446,4 +446,21 @@ public partial class MainWindowViewModel : ObservableObject
         }
         SqlEditor.CaretOffset = caretpos;
     }
+    [RelayCommand]
+    private async Task ConnectDb()
+    {
+        // ファイルダイアログを表示
+        var dialog = new OpenFileDialog
+        {
+            Title = "SQLIte の DB ファイルを開く",
+            Filter = "SQLite DB ファイル (*.db)|*.db|すべてのファイル (*.*)|*.*",
+            DefaultExt = ".sql",
+            AddExtension = true,
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            coreService.CheckOtherDB(dialog.FileName);
+            await GetTableNames();
+        }
+    }
 }

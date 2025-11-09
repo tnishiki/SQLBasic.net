@@ -126,11 +126,13 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="30"/>
                     <RowDefinition/>
+                    <RowDefinition Height="30"/>
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0" Margin="5,0,5,0">
                     <TextBlock  Text="テーブル一覧" VerticalAlignment="Bottom" Foreground="White"/>
                 </Grid>
                 <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" Margin="5,0,5,0"/>
+                <Button Grid.Row="2" Content="他のDBに接続する" Command="{Binding ConnectDbCommand}" Margin="5,5,5,5"/>
             </Grid>
         </Grid>
         <StatusBar Grid.Row="2" Background="#2D2D30" Foreground="White">

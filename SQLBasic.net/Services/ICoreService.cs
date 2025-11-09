@@ -7,10 +7,11 @@ public interface ICoreService
     string GetRegistryBasePath();
 
 #if DEBUG
-    public bool CheckLocalDB();
+    bool CheckLocalDB();
 #endif
+    bool CheckOtherDB(string dbfilePath);
 
-        Task<List<string>> GetTableNames();
+    Task<List<string>> GetTableNames();
     Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDBQuery(string SQL);
     (string, TokenKind tokenKind) CheckSQL(string SQL);
     Task<string> CallDBExecute(string SQL);
