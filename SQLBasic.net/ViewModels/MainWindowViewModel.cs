@@ -131,6 +131,25 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    private string GetCurrentQuery()
+    {
+        var fullText = SqlDocument.Text;
+        if (string.IsNullOrWhiteSpace(fullText)) return string.Empty;
+
+        var caretOffset = Math.Clamp(SqlEditor?.TextArea.Caret.Offset ?? 0, 0, fullText.Length);
+
+        // カーソルより前の最後のセミコロンを探す
+        int lastSemi = caretOffset > 0 ? fullText.LastIndexOf(';', caretOffset - 1) : -1;
+        int start = lastSemi < 0 ? 0 : lastSemi + 1;
+
+        // カーソル以降の最初のセミコロンを探す
+        int nextSemi = fullText.IndexOf(';', caretOffset);
+        int end = nextSemi < 0 ? fullText.Length : nextSemi;
+
+        if (start >= end) return string.Empty;
+        return fullText.Substring(start, end - start).Trim();
+    }
+
     [RelayCommand]
     private async Task Execute()
     {
@@ -139,12 +158,14 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(SQLQuery))
+        var currentQuery = GetCurrentQuery();
+
+        if (string.IsNullOrWhiteSpace(currentQuery))
         {
             return;
         }
 
-        var (p, token) = coreService.CheckSQL(SQLQuery);
+        var (p, token) = coreService.CheckSQL(currentQuery);
 
         SQLMessage = "";
         if (p != "OK")
@@ -155,7 +176,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (token == TokenKind.Select)
         {
-            var (headers, rows, message) = await coreService.CallDBQuery(SQLQuery);
+            var (headers, rows, message) = await coreService.CallDBQuery(currentQuery);
             if (message != "")
             {
                 SQLMessage = message;
@@ -201,7 +222,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else if (token == TokenKind.Update || token == TokenKind.Delete || token == TokenKind.Insert)
         {
-            var mes = await coreService.CallDBExecute(SQLQuery);
+            var mes = await coreService.CallDBExecute(currentQuery);
 
             if (mes != "OK")
             {
@@ -210,7 +231,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else if (token == TokenKind.Create || token == TokenKind.Drop)
         {
-            var mes = await coreService.CallDBExecute(SQLQuery);
+            var mes = await coreService.CallDBExecute(currentQuery);
 
             if (mes != "OK")
             {

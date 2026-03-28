@@ -522,11 +522,13 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return null;
         }
 
-        // FROM 直後はテーブル候補
-        var fromMatch = Regex.Match(textBeforeCaret, @"\bfrom\s+([a-zA-Z0-9_]*)$", RegexOptions.IgnoreCase);
-        if (fromMatch.Success)
+        // FROM / JOIN / UPDATE / INSERT INTO 直後はテーブル候補
+        // JOIN は INNER JOIN, LEFT JOIN, RIGHT JOIN 等すべて末尾が JOIN なのでそのまま一致する
+        var tableKeywordMatch = Regex.Match(textBeforeCaret,
+            @"\b(?:from|join|update|into)\s+([a-zA-Z0-9_]*)$", RegexOptions.IgnoreCase);
+        if (tableKeywordMatch.Success)
         {
-            var tablePrefix = fromMatch.Groups[1].Value;
+            var tablePrefix = tableKeywordMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
             return filteredTables.Count > 0 ? filteredTables : null;
         }
