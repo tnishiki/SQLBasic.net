@@ -1,6 +1,6 @@
 # SQLBasic.net
 
-> 日本語版は [README.ja.md](README.ja.md) をご覧ください。
+> **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md)
 
 **SQLBasic.net** is an intuitive SQL editor for **SQLite**.
 It provides syntax highlighting, smart auto-completion, and SQL formatting, allowing you to instantly view query results in the same window.
