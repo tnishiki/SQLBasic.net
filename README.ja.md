@@ -1,5 +1,7 @@
 # SQLBasic.net
 
+> English version is available at [README.md](README.md).
+
 **SQLBasic.net** は **SQLite** 向けの直感的な SQL エディタです。
 シンタックスハイライト・スマート自動補完・SQL 整形を備え、実行結果を同一画面内で即座に確認できます。
 クラウド接続不要で完全オフラインで動作するため、セットアップが最小限で済み、インストール直後からすぐに学習に集中できます。
