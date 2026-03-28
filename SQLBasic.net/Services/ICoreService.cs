@@ -1,4 +1,5 @@
 ﻿using System.Windows.Media;
+using SQLBasic_net.Datas;
 
 namespace SQLBasic_net.Services;
 
@@ -12,6 +13,7 @@ public interface ICoreService
     bool CheckOtherDB(string dbfilePath);
 
     Task<List<string>> GetTableNames();
+    Task<List<ColumnInfo>> GetColumnInfos(string tableName);
     Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDBQuery(string SQL);
     (string, TokenKind tokenKind) CheckSQL(string SQL);
     Task<(int AffectedRows, string Message)> CallDBExecute(string SQL);

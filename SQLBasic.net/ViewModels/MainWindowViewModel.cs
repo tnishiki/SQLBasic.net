@@ -9,6 +9,7 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Highlighting;
 using Microsoft.Win32;
+using SQLBasic_net.Datas;
 using SQLBasic_net.Services;
 using SQLBasic_net.Views;
 using System.Text;
@@ -49,6 +50,26 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<string> _TableNames = new ObservableCollection<string>();
+
+    [ObservableProperty]
+    private string? _SelectedTableName;
+
+    partial void OnSelectedTableNameChanged(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        _ = LoadColumnInfosAsync(value);
+    }
+
+    private async Task LoadColumnInfosAsync(string tableName)
+    {
+        var infos = await coreService.GetColumnInfos(tableName);
+        ColumnInfos.Clear();
+        foreach (var info in infos)
+            ColumnInfos.Add(info);
+    }
+
+    [ObservableProperty]
+    private ObservableCollection<ColumnInfo> _ColumnInfos = new ObservableCollection<ColumnInfo>();
 
     [ObservableProperty]
     private ObservableCollection<ExpandoObject> _GridItems = new ObservableCollection<ExpandoObject>();

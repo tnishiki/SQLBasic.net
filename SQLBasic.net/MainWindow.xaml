@@ -108,9 +108,9 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="結果一覧" Foreground="White" VerticalAlignment="Bottom"/>
-                    <DataGrid Grid.Row="1" x:Name="QueryGrid" ItemsSource="{Binding GridItems}" HeadersVisibility="Column" 
-                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333" 
-                          RowBackground="Black" 
+                    <DataGrid Grid.Row="1" x:Name="QueryGrid" ItemsSource="{Binding GridItems}" HeadersVisibility="Column"
+                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333"
+                          RowBackground="Black"
                           GridLinesVisibility="None"
                           AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
                         <DataGrid.ColumnHeaderStyle>
@@ -128,14 +128,35 @@
             <Grid Grid.Column="1" Background="#2D2D30">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="30"/>
-                    <RowDefinition/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                     <RowDefinition Height="30"/>
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0" Margin="5,0,5,0">
                     <TextBlock  Text="テーブル一覧" VerticalAlignment="Bottom" Foreground="White"/>
                 </Grid>
-                <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" Margin="5,0,5,0"/>
-                <Button Grid.Row="2" Content="他のDBに接続する" Command="{Binding ConnectDbCommand}" Margin="5,5,5,5"/>
+                <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" SelectedItem="{Binding SelectedTableName}" Margin="5,0,5,0"/>
+                <DataGrid Grid.Row="2" ItemsSource="{Binding ColumnInfos}" HeadersVisibility="Column"
+                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333"
+                          RowBackground="Black"
+                          GridLinesVisibility="None"
+                          AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#2D2D30"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="BorderBrush" Value="#444"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="列名" Binding="{Binding Name}"/>
+                        <DataGridTextColumn Header="型" Binding="{Binding DataType}"/>
+                        <DataGridTextColumn Header="NULL許可" Binding="{Binding IsNullable}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Grid.Row="3" Content="他のDBに接続する" Command="{Binding ConnectDbCommand}" Margin="5,5,5,5"/>
             </Grid>
         </Grid>
         <StatusBar Grid.Row="2" Background="#2D2D30" Foreground="White">

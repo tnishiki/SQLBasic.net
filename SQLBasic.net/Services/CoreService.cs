@@ -5,6 +5,7 @@ using System.Windows.Media;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Win32;
+using SQLBasic_net.Datas;
 using SQLBasic_net.Services;
 
 namespace SQLBasic_net.Services;
@@ -491,6 +492,31 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
         return columns;
     }
+    public async Task<List<ColumnInfo>> GetColumnInfos(string tableName)
+    {
+        var result = new List<ColumnInfo>();
+        if (string.IsNullOrWhiteSpace(tableName) || string.IsNullOrWhiteSpace(connectionString))
+            return result;
+        try
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+            using var command = new SqliteCommand($"PRAGMA table_info([{tableName}]);", connection);
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new ColumnInfo
+                {
+                    Name       = reader.GetString(1),
+                    DataType   = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    IsNullable = reader.GetInt32(3) == 0 ? "○" : "×",
+                });
+            }
+        }
+        catch { }
+        return result;
+    }
+
     public (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset)
     {
         if (string.IsNullOrEmpty(documentText))
