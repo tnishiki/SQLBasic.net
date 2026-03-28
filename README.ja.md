@@ -1,6 +1,6 @@
 # SQLBasic.net
 
-> [English](README.md) | **日本語** | [简体中文](README.zh-CN.md) | [Español](README.es.md)
+> [英語](README.md) | **日本語** | [簡体字中国語](README.zh-CN.md) | [スペイン語](README.es.md)
 
 **SQLBasic.net** は **SQLite** 向けの直感的な SQL エディタです。
 シンタックスハイライト・スマート自動補完・SQL 整形を備え、実行結果を同一画面内で即座に確認できます。

@@ -1,6 +1,6 @@
 # SQLBasic.net
 
-> [English](README.md) | [日本語](README.ja.md) | **简体中文** | [Español](README.es.md)
+> [英语](README.md) | [日语](README.ja.md) | **简体中文** | [西班牙语](README.es.md)
 
 **SQLBasic.net** 是一款面向 **SQLite** 的直观 SQL 编辑器。
 提供语法高亮、智能自动补全和 SQL 格式化功能，可在同一窗口中即时查看查询结果。
