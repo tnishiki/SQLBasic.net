@@ -491,13 +491,10 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
         return columns;
     }
-    public IEnumerable<string>? GetCandicateDatabaseItem(string documentText, int caretOffset)
+    public (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset)
     {
         if (string.IsNullOrEmpty(documentText))
-        {
-            return null;
-        }
-
+            return (null, "");
 
         caretOffset = Math.Clamp(caretOffset, 0, documentText.Length);
         string textBeforeCaret = documentText.Substring(0, caretOffset);
@@ -510,37 +507,33 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         {
             var alias = dotMatch.Groups[1].Value;
             var columnPrefix = dotMatch.Groups[2].Value;
-
             var tableName = ResolveTableName(tableAliases, alias);
             if (!string.IsNullOrEmpty(tableName))
             {
                 var filteredColumns = FilterByPrefix(GetColumnNamesOnEditor(tableName), columnPrefix);
-                return filteredColumns.Count > 0 ? filteredColumns : null;
+                return filteredColumns.Count > 0 ? (filteredColumns, "候補カラム") : (null, "");
             }
-
-            return null;
+            return (null, "");
         }
 
         // FROM / JOIN / UPDATE / INSERT INTO 直後はテーブル候補
-        // JOIN は INNER JOIN, LEFT JOIN, RIGHT JOIN 等すべて末尾が JOIN なのでそのまま一致する
         var tableKeywordMatch = Regex.Match(textBeforeCaret,
             @"\b(?:from|join|update|into)\s+([a-zA-Z0-9_]*)$", RegexOptions.IgnoreCase);
         if (tableKeywordMatch.Success)
         {
             var tablePrefix = tableKeywordMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
-            return filteredTables.Count > 0 ? filteredTables : null;
+            return filteredTables.Count > 0 ? (filteredTables, "候補テーブル") : (null, "");
         }
 
         // DROP TABLE / ALTER TABLE / CREATE TABLE など TABLE キーワード直後はテーブル候補
-        // IF EXISTS / IF NOT EXISTS が挟まるケースにも対応
         var afterTableMatch = Regex.Match(textBeforeCaret,
             @"\btable\s+(?:if\s+(?:not\s+)?exists\s+)?([a-zA-Z0-9_]*)$", RegexOptions.IgnoreCase);
         if (afterTableMatch.Success)
         {
             var tablePrefix = afterTableMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
-            return filteredTables.Count > 0 ? filteredTables : null;
+            return filteredTables.Count > 0 ? (filteredTables, "候補テーブル") : (null, "");
         }
 
         // SELECT ～ FROM の間ではカラム候補
@@ -552,25 +545,154 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             {
                 var prefixMatch = Regex.Match(textBeforeCaret, @"([a-zA-Z0-9_]*)$");
                 var columnPrefix = prefixMatch.Success ? prefixMatch.Groups[1].Value : string.Empty;
-
                 var tablesForColumns = tableAliases.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                if (tablesForColumns.Count == 0)
+                if (tablesForColumns.Count > 0)
                 {
-                    return null;
+                    var allColumns = new List<string>();
+                    foreach (var table in tablesForColumns)
+                        allColumns.AddRange(GetColumnNamesOnEditor(table));
+                    var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
+                    if (filteredColumns.Count > 0)
+                        return (filteredColumns, "候補カラム");
                 }
-
-                var allColumns = new List<string>();
-                foreach (var table in tablesForColumns)
-                {
-                    allColumns.AddRange(GetColumnNamesOnEditor(table));
-                }
-
-                var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
-                return filteredColumns.Count > 0 ? filteredColumns : null;
             }
         }
 
-        return null;
+        // SQL キーワード補完
+        var kwPrefix = Regex.Match(textBeforeCaret, @"([a-zA-Z_][a-zA-Z0-9_ ]*)$").Groups[1].Value.TrimEnd();
+        var (kwCandidates, kwHeader) = GetSqlKeywordCandidates(textBeforeCaret, kwPrefix);
+        if (kwCandidates.Count > 0)
+            return (kwCandidates, kwHeader);
+
+        return (null, "");
+    }
+
+    private static bool IsKeywordToken(TokenKind kind) => kind >= TokenKind.Select;
+
+    private static List<Token> TokenizeAll(string text)
+    {
+        var lexer = new Lexer(text);
+        var tokens = new List<Token>();
+        while (true)
+        {
+            var tok = lexer.NextToken();
+            if (tok.Kind == TokenKind.EOF) break;
+            tokens.Add(tok);
+        }
+        return tokens;
+    }
+
+    private (List<string> candidates, string header) GetSqlKeywordCandidates(string textBeforeCaret, string prefix)
+    {
+        // プレフィックスを除いた部分でコンテキストを判定
+        var contextText = !string.IsNullOrEmpty(prefix) && textBeforeCaret.EndsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? textBeforeCaret[..^prefix.Length]
+            : textBeforeCaret;
+
+        var allTokens = TokenizeAll(contextText);
+
+        // 最後のセミコロン以降を現在のステートメントとして扱う
+        var lastSemiIdx = allTokens.FindLastIndex(t => t.Kind == TokenKind.Semicolon);
+        var stmtTokens = (lastSemiIdx >= 0 ? allTokens.Skip(lastSemiIdx + 1) : (IEnumerable<Token>)allTokens).ToList();
+
+        // ステートメントが空 → DML/DDL 先頭キーワードを提案
+        if (stmtTokens.Count == 0)
+        {
+            return (FilterByPrefix(new List<string> {
+                "SELECT", "INSERT INTO", "UPDATE", "DELETE FROM",
+                "CREATE TABLE", "CREATE INDEX", "CREATE VIEW",
+                "DROP TABLE", "DROP INDEX", "DROP VIEW",
+                "ALTER TABLE", "BEGIN", "COMMIT", "ROLLBACK", "EXPLAIN", "PRAGMA"
+            }, prefix), "候補キーワード");
+        }
+
+        // 最後のキーワードトークンのインデックス
+        int lastKwIdx = stmtTokens.FindLastIndex(t => IsKeywordToken(t.Kind));
+        var lastKw = lastKwIdx >= 0 ? stmtTokens[lastKwIdx].Kind : TokenKind.EOF;
+        var lastToken = stmtTokens.Last();
+        bool lastIsNonKeyword = !IsKeywordToken(lastToken.Kind);
+
+        // 最後から2番目のキーワード
+        int prevKwIdx = -1;
+        for (int i = lastKwIdx - 1; i >= 0; i--)
+        {
+            if (IsKeywordToken(stmtTokens[i].Kind)) { prevKwIdx = i; break; }
+        }
+        var prevKw = prevKwIdx >= 0 ? stmtTokens[prevKwIdx].Kind : TokenKind.EOF;
+
+        List<string> keywords;
+
+        // テーブル名/カラム名など非キーワードの後 → 直前のキーワードで文脈判断
+        if (lastIsNonKeyword)
+        {
+            keywords = lastKw switch
+            {
+                TokenKind.From or TokenKind.Join =>
+                    new() { "WHERE", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN", "CROSS JOIN", "NATURAL JOIN",
+                            "GROUP BY", "ORDER BY", "HAVING", "LIMIT", "UNION", "EXCEPT", "INTERSECT" },
+                TokenKind.On =>
+                    new() { "AND", "OR", "WHERE", "GROUP BY", "ORDER BY", "HAVING", "LIMIT" },
+                TokenKind.Where or TokenKind.Having or TokenKind.And or TokenKind.Or =>
+                    new() { "AND", "OR", "NOT", "ORDER BY", "GROUP BY", "LIMIT" },
+                TokenKind.Update => new() { "SET" },
+                TokenKind.Into   => new() { "VALUES", "SELECT" },
+                TokenKind.Set    => new() { "WHERE" },
+                TokenKind.Limit  => new() { "OFFSET" },
+                TokenKind.By when prevKw == TokenKind.Order =>
+                    new() { "ASC", "DESC", "NULLS FIRST", "NULLS LAST" },
+                TokenKind.By when prevKw == TokenKind.Group =>
+                    new() { "HAVING", "ORDER BY", "LIMIT" },
+                TokenKind.Table when prevKw == TokenKind.Alter =>
+                    new() { "ADD COLUMN", "RENAME TO", "RENAME COLUMN" },
+                _ => new()
+            };
+        }
+        else
+        {
+            // キーワード自体が最後のトークン → その後に続くキーワードを提案
+            keywords = lastKw switch
+            {
+                TokenKind.EOF    => new() { "SELECT", "INSERT INTO", "UPDATE", "DELETE FROM",
+                                            "CREATE TABLE", "CREATE INDEX", "CREATE VIEW",
+                                            "DROP TABLE", "DROP INDEX", "ALTER TABLE",
+                                            "BEGIN", "COMMIT", "ROLLBACK", "EXPLAIN", "PRAGMA" },
+                TokenKind.Select => new() { "DISTINCT", "ALL" },
+                TokenKind.From   => new() { "WHERE", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN",
+                                            "CROSS JOIN", "NATURAL JOIN", "GROUP BY", "ORDER BY", "HAVING", "LIMIT" },
+                TokenKind.Where or TokenKind.Having =>
+                    new() { "AND", "OR", "NOT", "EXISTS", "BETWEEN", "IN", "LIKE", "IS", "NULL" },
+                TokenKind.And or TokenKind.Or =>
+                    new() { "NOT", "EXISTS", "BETWEEN", "IN", "LIKE", "IS", "NULL" },
+                TokenKind.Not    => new() { "EXISTS", "IN", "LIKE", "BETWEEN" },
+                TokenKind.Join   => new() { "ON" },
+                TokenKind.On     => new() { "AND", "OR", "WHERE", "GROUP BY", "ORDER BY", "HAVING", "LIMIT" },
+                TokenKind.Inner => new() { "JOIN" },
+                TokenKind.Left or TokenKind.Right or TokenKind.Full => new() { "JOIN", "OUTER JOIN" },
+                TokenKind.Outer  => new() { "JOIN" },
+                TokenKind.Group  => new() { "BY" },
+                TokenKind.Order  => new() { "BY" },
+                TokenKind.By when prevKw == TokenKind.Order => new() { "ASC", "DESC", "NULLS FIRST", "NULLS LAST" },
+                TokenKind.By when prevKw == TokenKind.Group => new() { "HAVING", "ORDER BY", "LIMIT" },
+                TokenKind.Asc or TokenKind.Desc => new() { "NULLS FIRST", "NULLS LAST" },
+                TokenKind.Limit  => new() { "OFFSET" },
+                TokenKind.Insert => new() { "INTO" },
+                TokenKind.Into   => new() { "VALUES", "SELECT" },
+                TokenKind.Update => new() { "SET" },
+                TokenKind.Set    => new() { "WHERE" },
+                TokenKind.Delete => new() { "FROM" },
+                TokenKind.Create => new() { "TABLE", "UNIQUE INDEX", "INDEX", "VIEW", "TRIGGER",
+                                            "TEMP TABLE", "TEMPORARY TABLE" },
+                TokenKind.Drop   => new() { "TABLE", "INDEX", "VIEW", "TRIGGER" },
+                TokenKind.Alter  => new() { "TABLE" },
+                TokenKind.Add    => new() { "COLUMN" },
+                TokenKind.Table when prevKw == TokenKind.Alter =>
+                    new() { "ADD COLUMN", "RENAME TO", "RENAME COLUMN" },
+                _ => new()
+            };
+        }
+
+        var filtered = FilterByPrefix(keywords, prefix);
+        return (filtered, "候補キーワード");
     }
 
     private Dictionary<string, string> ParseTableAliases(string text)

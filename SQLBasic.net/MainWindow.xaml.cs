@@ -52,7 +52,7 @@ public partial class MainWindow : Window
 
                 var model = (MainWindowViewModel)DataContext;
                 int caretOffset = SqlEditor.TextArea.Caret.Offset;
-                var candidates = model.GetCandicateDatabaseItem(SqlEditor.Document.Text, caretOffset);
+                var (candidates, completionHeader) = model.GetCandicateDatabaseItem(SqlEditor.Document.Text, caretOffset);
                 if (candidates == null)
                 {
                     return;
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
                 // Content を先にパネルへ差し替えて CompletionList の親を解放してから追加する
                 var headerLabel = new TextBlock
                 {
-                    Text = "候補テーブル",
+                    Text = completionHeader,
                     Padding = new Thickness(4, 2, 4, 2),
                 };
                 var panel = new DockPanel();

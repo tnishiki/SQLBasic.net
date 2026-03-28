@@ -513,15 +513,11 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    public IEnumerable<string>? GetCandicateDatabaseItem(string documentText, int caretOffset)
+    public (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset)
     {
         if (coreService == null || string.IsNullOrEmpty(documentText))
-        {
-            return null;
-        }
-        var candicate = coreService.GetCandicateDatabaseItem(documentText, caretOffset);
-
-        return candicate;
+            return (null, "");
+        return coreService.GetCandicateDatabaseItem(documentText, caretOffset);
     }
 
     [RelayCommand]
