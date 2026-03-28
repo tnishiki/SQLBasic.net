@@ -78,7 +78,20 @@ public partial class MainWindow : Window
                 {
                     data.Add(new MyCompletionData(item));
                 }
-                _completionWindow.Title = "候補";
+
+                // ヘッダーラベルをCompletionListの上に配置する
+                // Content を先にパネルへ差し替えて CompletionList の親を解放してから追加する
+                var headerLabel = new TextBlock
+                {
+                    Text = "候補テーブル",
+                    Padding = new Thickness(4, 2, 4, 2),
+                };
+                var panel = new DockPanel();
+                DockPanel.SetDock(headerLabel, Dock.Top);
+                panel.Children.Add(headerLabel);
+                _completionWindow.Content = panel;           // CompletionList が Window の論理ツリーから切り離される
+                panel.Children.Add(_completionWindow.CompletionList); // 親なし状態になったので追加可能
+
                 _completionWindow.Show();
                 _completionWindow.Closed += (_, _) => _completionWindow = null;
             }
