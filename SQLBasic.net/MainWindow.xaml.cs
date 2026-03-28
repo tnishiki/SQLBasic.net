@@ -63,6 +63,16 @@ public partial class MainWindow : Window
                     _completionWindow = null;
                 }
                 _completionWindow = new CompletionWindow(SqlEditor.TextArea);
+
+                // カーソル前の入力済みプレフィックスをcompletionSegmentに含めるため、単語の先頭をStartOffsetに設定
+                string documentText = SqlEditor.Document.Text;
+                int wordStart = caretOffset;
+                while (wordStart > 0 && (char.IsLetterOrDigit(documentText[wordStart - 1]) || documentText[wordStart - 1] == '_'))
+                {
+                    wordStart--;
+                }
+                _completionWindow.StartOffset = wordStart;
+
                 var data = _completionWindow.CompletionList.CompletionData;
                 foreach (var item in candidates)
                 {
