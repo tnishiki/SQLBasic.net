@@ -546,15 +546,15 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                 var prefixMatch = Regex.Match(textBeforeCaret, @"([a-zA-Z0-9_]*)$");
                 var columnPrefix = prefixMatch.Success ? prefixMatch.Groups[1].Value : string.Empty;
                 var tablesForColumns = tableAliases.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                if (tablesForColumns.Count > 0)
-                {
-                    var allColumns = new List<string>();
-                    foreach (var table in tablesForColumns)
-                        allColumns.AddRange(GetColumnNamesOnEditor(table));
-                    var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
-                    if (filteredColumns.Count > 0)
-                        return (filteredColumns, "候補カラム");
-                }
+
+                // SELECT の列リストの次は必ず FROM なので常に候補に含める
+                var allColumns = new List<string> { "FROM" };
+                foreach (var table in tablesForColumns)
+                    allColumns.AddRange(GetColumnNamesOnEditor(table));
+
+                var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
+                if (filteredColumns.Count > 0)
+                    return (filteredColumns, "候補カラム");
             }
         }
 
@@ -603,7 +603,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                 "CREATE TABLE", "CREATE INDEX", "CREATE VIEW",
                 "DROP TABLE", "DROP INDEX", "DROP VIEW",
                 "ALTER TABLE", "BEGIN", "COMMIT", "ROLLBACK", "EXPLAIN", "PRAGMA"
-            }, prefix), "候補キーワード");
+            }, prefix), "候補");
         }
 
         // 最後のキーワードトークンのインデックス
@@ -627,6 +627,9 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         {
             keywords = lastKw switch
             {
+                // SELECT 列リストの後（カラム名・カンマ・*等の非キーワード）→ FROM
+                TokenKind.Select or TokenKind.Distinct or TokenKind.All =>
+                    new() { "FROM" },
                 TokenKind.From or TokenKind.Join =>
                     new() { "WHERE", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN", "CROSS JOIN", "NATURAL JOIN",
                             "GROUP BY", "ORDER BY", "HAVING", "LIMIT", "UNION", "EXCEPT", "INTERSECT" },
@@ -692,7 +695,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
 
         var filtered = FilterByPrefix(keywords, prefix);
-        return (filtered, "候補キーワード");
+        return (filtered, "候補");
     }
 
     private Dictionary<string, string> ParseTableAliases(string text)
