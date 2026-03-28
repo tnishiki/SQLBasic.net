@@ -150,6 +150,33 @@ public partial class MainWindowViewModel : ObservableObject
         return fullText.Substring(start, end - start).Trim();
     }
 
+    private static (string ObjectType, string ObjectName) ParseDdlTarget(string sql, bool isCreate)
+    {
+        // CREATE [TEMP[ORARY]] TABLE|INDEX|VIEW|TRIGGER [IF NOT EXISTS] name
+        // DROP TABLE|INDEX|VIEW|TRIGGER [IF EXISTS] name
+        var pattern = isCreate
+            ? @"\bCREATE\s+(?:TEMP(?:ORARY)?\s+)?(TABLE|UNIQUE\s+INDEX|INDEX|VIEW|TRIGGER)\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)"
+            : @"\bDROP\s+(TABLE|INDEX|VIEW|TRIGGER)\s+(?:IF\s+EXISTS\s+)?([a-zA-Z0-9_]+)";
+
+        var match = Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
+        if (!match.Success) return ("オブジェクト", "");
+
+        var typeMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TABLE"]        = "テーブル",
+            ["INDEX"]        = "インデックス",
+            ["UNIQUE INDEX"] = "ユニークインデックス",
+            ["VIEW"]         = "ビュー",
+            ["TRIGGER"]      = "トリガー",
+        };
+
+        var rawType = Regex.Replace(match.Groups[1].Value.Trim(), @"\s+", " ");
+        var objectType = typeMap.TryGetValue(rawType, out var jp) ? jp : rawType;
+        var objectName = match.Groups[2].Value;
+
+        return (objectType, objectName);
+    }
+
     [RelayCommand]
     private async Task Execute()
     {
@@ -217,27 +244,73 @@ public partial class MainWindowViewModel : ObservableObject
                         EditorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
                         ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
                     }
+
+                    SQLMessage = $"{DataNum} 件のデータがヒットしました";
                 });
             }
         }
-        else if (token == TokenKind.Update || token == TokenKind.Delete || token == TokenKind.Insert)
+        else if (token == TokenKind.Insert)
         {
-            var mes = await coreService.CallDBExecute(currentQuery);
-
-            if (mes != "OK")
+            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            if (mes != "")
             {
                 SQLMessage = mes;
+            }
+            else
+            {
+                SQLMessage = $"{affectedRows} 件のデータを入力しました";
             }
         }
-        else if (token == TokenKind.Create || token == TokenKind.Drop)
+        else if (token == TokenKind.Update)
         {
-            var mes = await coreService.CallDBExecute(currentQuery);
-
-            if (mes != "OK")
+            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            if (mes != "")
             {
                 SQLMessage = mes;
             }
-
+            else
+            {
+                SQLMessage = $"{affectedRows} 件のデータを更新しました";
+            }
+        }
+        else if (token == TokenKind.Delete)
+        {
+            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            if (mes != "")
+            {
+                SQLMessage = mes;
+            }
+            else
+            {
+                SQLMessage = $"{affectedRows} 件を削除しました";
+            }
+        }
+        else if (token == TokenKind.Create)
+        {
+            var (_, mes) = await coreService.CallDBExecute(currentQuery);
+            if (mes != "")
+            {
+                SQLMessage = mes;
+            }
+            else
+            {
+                var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: true);
+                SQLMessage = $"{objectType} {objectName} を作成しました";
+            }
+            await GetTableNames();
+        }
+        else if (token == TokenKind.Drop)
+        {
+            var (_, mes) = await coreService.CallDBExecute(currentQuery);
+            if (mes != "")
+            {
+                SQLMessage = mes;
+            }
+            else
+            {
+                var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: false);
+                SQLMessage = $"{objectType} {objectName} を削除しました";
+            }
             await GetTableNames();
         }
     }

@@ -425,21 +425,20 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (new List<string?>(), new List<object[]>(), err.Message);
         }
     }
-    public async Task<string> CallDBExecute(string SQL)
+    public async Task<(int AffectedRows, string Message)> CallDBExecute(string SQL)
     {
         try
         {
             using (var connection = new SqliteConnection(connectionString))
             {
                 await connection.OpenAsync();
-                await connection.ExecuteAsync(SQL);
-
-                return "OK";
+                var affectedRows = await connection.ExecuteAsync(SQL);
+                return (affectedRows, "");
             }
         }
         catch (Exception err)
         {
-            return err.Message;
+            return (0, err.Message);
         }
     }
     private IEnumerable<string> GetTableNamesOnEditor()
@@ -529,6 +528,17 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         if (tableKeywordMatch.Success)
         {
             var tablePrefix = tableKeywordMatch.Groups[1].Value;
+            var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
+            return filteredTables.Count > 0 ? filteredTables : null;
+        }
+
+        // DROP TABLE / ALTER TABLE / CREATE TABLE など TABLE キーワード直後はテーブル候補
+        // IF EXISTS / IF NOT EXISTS が挟まるケースにも対応
+        var afterTableMatch = Regex.Match(textBeforeCaret,
+            @"\btable\s+(?:if\s+(?:not\s+)?exists\s+)?([a-zA-Z0-9_]*)$", RegexOptions.IgnoreCase);
+        if (afterTableMatch.Success)
+        {
+            var tablePrefix = afterTableMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
             return filteredTables.Count > 0 ? filteredTables : null;
         }
