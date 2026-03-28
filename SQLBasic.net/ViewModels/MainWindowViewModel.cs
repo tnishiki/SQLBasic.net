@@ -536,6 +536,23 @@ public partial class MainWindowViewModel : ObservableObject
         }
         SqlEditor.CaretOffset = caretpos;
     }
+
+    [RelayCommand]
+    private void RemoveComment()
+    {
+        if (SqlEditor == null) return;
+
+        var (text, caretpos) = coreService.RemoveSqlComment(SqlDocument.Text,
+            SqlEditor.CaretOffset,
+            SqlEditor.SelectionStart,
+            SqlEditor.SelectionLength);
+
+        if (text != null)
+        {
+            SqlDocument.Text = text;
+        }
+        SqlEditor.CaretOffset = caretpos;
+    }
     [RelayCommand]
     private async Task ConnectDb()
     {

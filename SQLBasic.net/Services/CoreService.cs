@@ -861,4 +861,66 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (documentText, caretOffset);
         }
     }
+
+    public (string newText, int newCaretOffset) RemoveSqlComment(
+        string documentText, int caretOffset, int selectionStart, int selectionLength)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(documentText))
+                return (documentText, caretOffset);
+
+            // 行頭位置を調べる (SetSqlComment と同じロジック)
+            int startpos = selectionLength == 0 ? caretOffset : selectionStart;
+
+            if (startpos == documentText.Length)
+                startpos = startpos - 2;
+
+            if (startpos < 2)
+            {
+                startpos = 0;
+            }
+            else
+            {
+                for (; 2 <= startpos; startpos--)
+                {
+                    if (documentText[startpos - 2] == '\r' && documentText[startpos - 1] == '\n')
+                        break;
+                }
+                if (startpos < 2) startpos = 0;
+            }
+
+            if (selectionLength == 0)
+            {
+                // 単一行: 行頭の "-- " または "--" を削除
+                var rest = documentText.Substring(startpos);
+                var newRest = Regex.Replace(rest, @"^-- ?", "");
+                var removed = rest.Length - newRest.Length;
+                var newText = documentText.Substring(0, startpos) + newRest;
+                var newCaret = Math.Max(startpos, caretOffset - removed);
+                return (newText, newCaret);
+            }
+            else
+            {
+                // 複数行: 選択範囲内の各行頭から "-- " または "--" を削除
+                int endpos = selectionStart + selectionLength;
+                var target = documentText.Substring(startpos, endpos - startpos);
+                var newTarget = Regex.Replace(target, @"^-- ?", "", RegexOptions.Multiline);
+                var newText = documentText.Substring(0, startpos) + newTarget + documentText.Substring(endpos);
+                int lengthDiff = documentText.Length - newText.Length;
+
+                int newCaret;
+                if (caretOffset == selectionStart)
+                    newCaret = Math.Max(startpos, caretOffset - Math.Min(3, lengthDiff));
+                else
+                    newCaret = Math.Max(0, caretOffset - lengthDiff);
+
+                return (newText, newCaret);
+            }
+        }
+        catch
+        {
+            return (documentText, caretOffset);
+        }
+    }
 }

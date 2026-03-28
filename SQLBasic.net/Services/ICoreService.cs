@@ -22,4 +22,5 @@ public interface ICoreService
     string GetSytaxXml(string[]? colors);
     (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset);
     (string newText, int newCaretOffset) SetSqlComment(string documentText, int caretOffset, int selectionStart, int selectionLength);
+    (string newText, int newCaretOffset) RemoveSqlComment(string documentText, int caretOffset, int selectionStart, int selectionLength);
 }

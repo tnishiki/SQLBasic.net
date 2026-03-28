@@ -38,8 +38,10 @@
         <KeyBinding Modifiers="Control" Key="L" Command="{Binding CsvExportCommand}"/>
         <!-- Alt+F: 文書全体整形 -->
         <KeyBinding Modifiers="Alt" Key="F" Command="{Binding FormatDocumentCommand}"/>
-        <!-- Alt+C: コメントオン、オフ -->
+        <!-- Ctrl+K: 行コメント -->
         <KeyBinding Modifiers="Ctrl" Key="K" Command="{Binding SetCommentCommand}"/>
+        <!-- Shift+Ctrl+K: 行コメント解除 -->
+        <KeyBinding Modifiers="Ctrl+Shift" Key="K" Command="{Binding RemoveCommentCommand}"/>
     </Window.InputBindings>
     <Grid Background="#1E1E1E">
         <Grid.RowDefinitions>
@@ -74,6 +76,7 @@
                 <Separator/>
                 <Button Content="整形(Alt+F)"  Command="{Binding FormatDocumentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
                 <Button Content="コメント(Ctrl+K)"  Command="{Binding SetCommentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
+                <Button Content="コメント解除(Shift+Ctrl+K)" Command="{Binding RemoveCommentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
             </ToolBar>
         </ToolBarTray>
         <Grid Grid.Row="1">
