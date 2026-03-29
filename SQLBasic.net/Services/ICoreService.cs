@@ -8,21 +8,21 @@ public interface ICoreService
     string GetRegistryBasePath();
 
 #if DEBUG
-    bool CheckLocalDB();
+    bool InitializeLocalDB();
 #endif
-    bool CheckOtherDB(string dbfilePath);
+    bool ConnectToDb(string dbfilePath);
 
-    Task<List<string>> GetTableNames();
-    Task<List<ColumnInfo>> GetColumnInfos(string tableName);
-    Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDBQuery(string SQL);
-    (string, TokenKind tokenKind) CheckSQL(string SQL);
-    Task<(int AffectedRows, string Message)> CallDBExecute(string SQL);
+    Task<List<string>> GetTableNamesAsync();
+    Task<List<ColumnInfo>> GetColumnInfosAsync(string tableName);
+    Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDbQueryAsync(string sql);
+    (string, TokenKind tokenKind) CheckSql(string sql);
+    Task<(int AffectedRows, string Message)> CallDbExecuteAsync(string sql);
 
     string GetStringColorCode(Brush brush);
     Brush GetSyntaxColor(int SyntaxNo);
     bool SetSyntaxColor(int SyntaxNo, Brush brush);
-    string GetSytaxXml(string[]? colors);
-    (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset);
+    string GetSyntaxXml(string[]? colors);
+    (IEnumerable<string>? Candidates, string Header) GetCandidateDatabaseItem(string documentText, int caretOffset);
     (string newText, int newCaretOffset) SetSqlComment(string documentText, int caretOffset, int selectionStart, int selectionLength);
     (string newText, int newCaretOffset) RemoveSqlComment(string documentText, int caretOffset, int selectionStart, int selectionLength);
 }

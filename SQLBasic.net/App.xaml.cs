@@ -42,7 +42,7 @@ public partial class App : Application
         var viewmodel = _host.Services.GetRequiredService<MainWindowViewModel>();
         if (viewmodel != null)
         {
-            await viewmodel.GetTableNames();
+            await viewmodel.GetTableNamesAsync();
         }
         // MainWindow 起動
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();

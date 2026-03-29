@@ -51,7 +51,7 @@ public class RegistryTests
 
         string RegistryPath = _coreService.GetRegistryBasePath();
 
-        _coreService.CheckLocalDB();
+        _coreService.InitializeLocalDB();
 
         string RegistryDbPath = $@"{RegistryPath}\DB";
 

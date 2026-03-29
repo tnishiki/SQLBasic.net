@@ -26,12 +26,12 @@ namespace SQLBasic_net;
 public partial class MainWindowViewModel : ObservableObject
 {
     [ObservableProperty]
-    private double _FontSize = 16.0;
+    private double _fontSize = 16.0;
 
     [ObservableProperty]
-    private TextDocument _SqlDocument = new TextDocument();
+    private TextDocument _sqlDocument = new TextDocument();
 
-    public string SQLQuery
+    public string SqlQuery
     {
         get
         {
@@ -40,20 +40,20 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private System.Windows.GridLength _EditorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
+    private System.Windows.GridLength _editorRowHeight = new System.Windows.GridLength(5, System.Windows.GridUnitType.Star);
     [ObservableProperty]
-    private System.Windows.GridLength _ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
+    private System.Windows.GridLength _resultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
 
     [ObservableProperty]
-    private Brush _EditorBackground = new SolidColorBrush(Colors.Black);
+    private Brush _editorBackground = new SolidColorBrush(Colors.Black);
     [ObservableProperty]
-    private IHighlightingDefinition? _SyntaxSet;
+    private IHighlightingDefinition? _syntaxSet;
 
     [ObservableProperty]
-    private ObservableCollection<string> _TableNames = new ObservableCollection<string>();
+    private ObservableCollection<string> _tableNames = new ObservableCollection<string>();
 
     [ObservableProperty]
-    private string? _SelectedTableName;
+    private string? _selectedTableName;
 
     partial void OnSelectedTableNameChanged(string? value)
     {
@@ -63,26 +63,26 @@ public partial class MainWindowViewModel : ObservableObject
 
     private async Task LoadColumnInfosAsync(string tableName)
     {
-        var infos = await coreService.GetColumnInfos(tableName);
+        var infos = await _coreService.GetColumnInfosAsync(tableName);
         ColumnInfos.Clear();
         foreach (var info in infos)
             ColumnInfos.Add(info);
     }
 
     [ObservableProperty]
-    private ObservableCollection<ColumnInfo> _ColumnInfos = new ObservableCollection<ColumnInfo>();
+    private ObservableCollection<ColumnInfo> _columnInfos = new ObservableCollection<ColumnInfo>();
 
     [ObservableProperty]
-    private ObservableCollection<ExpandoObject> _GridItems = new ObservableCollection<ExpandoObject>();
+    private ObservableCollection<ExpandoObject> _gridItems = new ObservableCollection<ExpandoObject>();
     [ObservableProperty]
-    private int _DataNum = 0;
+    private int _dataNum = 0;
     [ObservableProperty]
-    private string _SQLMessage = string.Empty;
+    private string _sqlMessage = string.Empty;
 
-    private readonly IWindowProvider windowProvider;
-    private readonly ICoreService coreService;
+    private readonly IWindowProvider _windowProvider;
+    private readonly ICoreService _coreService;
 
-    public MainWindow? win = null;
+    public MainWindow? Win = null;
 
     public TextEditor? SqlEditor = null;
 
@@ -103,21 +103,21 @@ public partial class MainWindowViewModel : ObservableObject
             LocalizationManager.Instance.SetLanguage(value.Code);
     }
 
-    public MainWindowViewModel(IWindowProvider _windowProvider, ICoreService _coreService)
+    public MainWindowViewModel(IWindowProvider windowProvider, ICoreService coreService)
     {
-        windowProvider = _windowProvider;
-        coreService = _coreService;
+        _windowProvider = windowProvider;
+        _coreService = coreService;
         _selectedLanguage = LanguageItems[0];
     }
 
-    public async Task GetTableNames()
+    public async Task GetTableNamesAsync()
     {
         TableNames.Clear();
 
-        if (coreService != null)
+        if (_coreService != null)
         {
 
-            var list = await coreService.GetTableNames();
+            var list = await _coreService.GetTableNamesAsync();
             foreach (var tname in list)
             {
                 TableNames.Add(tname);
@@ -130,14 +130,14 @@ public partial class MainWindowViewModel : ObservableObject
     {
         List<string> colorList = new List<string>();
 
-        EditorBackground = coreService.GetSyntaxColor(0);
+        EditorBackground = _coreService.GetSyntaxColor(0);
 
         for (int i = 1; i < 11; i++)
         {
-            colorList.Add(coreService.GetStringColorCode(coreService.GetSyntaxColor(i)));
+            colorList.Add(_coreService.GetStringColorCode(_coreService.GetSyntaxColor(i)));
         }
 
-        var xml = coreService.GetSytaxXml(colorList.ToArray());
+        var xml = _coreService.GetSyntaxXml(colorList.ToArray());
         using (var stringReader = new System.IO.StringReader(xml))
         {
             using (var reader = XmlReader.Create(stringReader))
@@ -220,7 +220,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task Execute()
     {
-        if (coreService == null)
+        if (_coreService == null)
         {
             return;
         }
@@ -232,32 +232,32 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var (p, token) = coreService.CheckSQL(currentQuery);
+        var (p, token) = _coreService.CheckSql(currentQuery);
 
-        SQLMessage = "";
+        SqlMessage = "";
         if (p != "OK")
         {
-            SQLMessage = p;
+            SqlMessage = p;
             return;
         }
 
         if (token == TokenKind.Select)
         {
-            var (headers, rows, message) = await coreService.CallDBQuery(currentQuery);
+            var (headers, rows, message) = await _coreService.CallDbQueryAsync(currentQuery);
             if (message != "")
             {
-                SQLMessage = message;
+                SqlMessage = message;
                 return;
             }
-            if (win != null)
+            if (Win != null)
             {
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
 
-                    win.BuildColumns(new List<string?>());
+                    Win.BuildColumns(new List<string?>());
                     GridItems.Clear();
 
-                    win.BuildColumns(headers);
+                    Win.BuildColumns(headers);
                     foreach (var row in rows)
                     {
                         dynamic expando = new ExpandoObject();
@@ -285,73 +285,73 @@ public partial class MainWindowViewModel : ObservableObject
                         ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
                     }
 
-                    SQLMessage = string.Format(LocalizationManager.Instance["Msg_SelectHit"], DataNum);
+                    SqlMessage = string.Format(LocalizationManager.Instance["Msg_SelectHit"], DataNum);
                 });
             }
         }
         else if (token == TokenKind.Insert)
         {
-            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            var (affectedRows, mes) = await _coreService.CallDbExecuteAsync(currentQuery);
             if (mes != "")
             {
-                SQLMessage = mes;
+                SqlMessage = mes;
             }
             else
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_InsertDone"], affectedRows);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_InsertDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Update)
         {
-            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            var (affectedRows, mes) = await _coreService.CallDbExecuteAsync(currentQuery);
             if (mes != "")
             {
-                SQLMessage = mes;
+                SqlMessage = mes;
             }
             else
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_UpdateDone"], affectedRows);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_UpdateDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Delete)
         {
-            var (affectedRows, mes) = await coreService.CallDBExecute(currentQuery);
+            var (affectedRows, mes) = await _coreService.CallDbExecuteAsync(currentQuery);
             if (mes != "")
             {
-                SQLMessage = mes;
+                SqlMessage = mes;
             }
             else
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_DeleteDone"], affectedRows);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_DeleteDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Create)
         {
-            var (_, mes) = await coreService.CallDBExecute(currentQuery);
+            var (_, mes) = await _coreService.CallDbExecuteAsync(currentQuery);
             if (mes != "")
             {
-                SQLMessage = mes;
+                SqlMessage = mes;
             }
             else
             {
                 var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: true);
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_CreateDone"], objectType, objectName);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_CreateDone"], objectType, objectName);
             }
-            await GetTableNames();
+            await GetTableNamesAsync();
         }
         else if (token == TokenKind.Drop)
         {
-            var (_, mes) = await coreService.CallDBExecute(currentQuery);
+            var (_, mes) = await _coreService.CallDbExecuteAsync(currentQuery);
             if (mes != "")
             {
-                SQLMessage = mes;
+                SqlMessage = mes;
             }
             else
             {
                 var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: false);
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_DropDone"], objectType, objectName);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_DropDone"], objectType, objectName);
             }
-            await GetTableNames();
+            await GetTableNamesAsync();
         }
     }
 
@@ -363,9 +363,9 @@ public partial class MainWindowViewModel : ObservableObject
             SqlDocument.Text = "";
         });
 
-        if (win != null)
+        if (Win != null)
         {
-            win.BuildColumns(new List<string?>());
+            Win.BuildColumns(new List<string?>());
             DataNum = 0;
 
             if (GridItems != null)
@@ -376,11 +376,11 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SetSytax()
+    private async Task SetSyntax()
     {
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            windowProvider.ShowDialog<SetSyntax>(w =>
+            _windowProvider.ShowDialog<SetSyntax>(w =>
             {
                 w.Topmost = true;
             });
@@ -433,7 +433,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_OpenError"], ex.Message);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_OpenError"], ex.Message);
             });
         }
     }
@@ -463,7 +463,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    SQLMessage = string.Format(LocalizationManager.Instance["Msg_SaveDone"], dialog.FileName);
+                    SqlMessage = string.Format(LocalizationManager.Instance["Msg_SaveDone"], dialog.FileName);
                 });
             }
         }
@@ -471,7 +471,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_SaveError"], ex.Message);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_SaveError"], ex.Message);
             });
         }
     }
@@ -484,7 +484,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    SQLMessage = LocalizationManager.Instance["Msg_NoExportData"];
+                    SqlMessage = LocalizationManager.Instance["Msg_NoExportData"];
                 });
                 return;
             }
@@ -536,7 +536,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_ExportDone"], dialog.FileName);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_ExportDone"], dialog.FileName);
             });
 
             if (File.Exists(dialog.FileName))
@@ -548,16 +548,16 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = string.Format(LocalizationManager.Instance["Msg_ExportError"], ex.Message);
+                SqlMessage = string.Format(LocalizationManager.Instance["Msg_ExportError"], ex.Message);
             });
         }
     }
 
-    public (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset)
+    public (IEnumerable<string>? Candidates, string Header) GetCandidateDatabaseItem(string documentText, int caretOffset)
     {
-        if (coreService == null || string.IsNullOrEmpty(documentText))
+        if (_coreService == null || string.IsNullOrEmpty(documentText))
             return (null, "");
-        return coreService.GetCandicateDatabaseItem(documentText, caretOffset);
+        return _coreService.GetCandidateDatabaseItem(documentText, caretOffset);
     }
 
     [RelayCommand]
@@ -565,7 +565,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (SqlEditor == null) return;
 
-        var (text, caretpos) = coreService.SetSqlComment(SqlDocument.Text,
+        var (text, caretpos) = _coreService.SetSqlComment(SqlDocument.Text,
             SqlEditor.CaretOffset,
             SqlEditor.SelectionStart,
             SqlEditor.SelectionLength);
@@ -582,7 +582,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (SqlEditor == null) return;
 
-        var (text, caretpos) = coreService.RemoveSqlComment(SqlDocument.Text,
+        var (text, caretpos) = _coreService.RemoveSqlComment(SqlDocument.Text,
             SqlEditor.CaretOffset,
             SqlEditor.SelectionStart,
             SqlEditor.SelectionLength);
@@ -606,8 +606,8 @@ public partial class MainWindowViewModel : ObservableObject
         };
         if (dialog.ShowDialog() == true)
         {
-            coreService.CheckOtherDB(dialog.FileName);
-            await GetTableNames();
+            _coreService.ConnectToDb(dialog.FileName);
+            await GetTableNamesAsync();
         }
     }
 }

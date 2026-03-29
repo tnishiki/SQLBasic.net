@@ -23,7 +23,7 @@ public partial class MainWindow : Window
         SqlEditor.TextArea.KeyDown += TextArea_KeyDown;
 
         DataContext = mainWindowViewModel;
-        mainWindowViewModel.win = this;
+        mainWindowViewModel.Win = this;
 
         mainWindowViewModel.SqlEditor = SqlEditor;;
     }
@@ -52,7 +52,7 @@ public partial class MainWindow : Window
 
                 var model = (MainWindowViewModel)DataContext;
                 int caretOffset = SqlEditor.TextArea.Caret.Offset;
-                var (candidates, completionHeader) = model.GetCandicateDatabaseItem(SqlEditor.Document.Text, caretOffset);
+                var (candidates, completionHeader) = model.GetCandidateDatabaseItem(SqlEditor.Document.Text, caretOffset);
                 if (candidates == null)
                 {
                     return;

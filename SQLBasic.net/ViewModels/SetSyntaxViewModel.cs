@@ -101,7 +101,7 @@ order by a.aaa
             c.Add(coreService.GetStringColorCode(item.Color));
         }
 
-        var xml = coreService.GetSytaxXml(c.ToArray());
+        var xml = coreService.GetSyntaxXml(c.ToArray());
         using (var stringReader = new System.IO.StringReader(xml))
         {
             using (var reader = XmlReader.Create(stringReader))

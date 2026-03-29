@@ -16,16 +16,14 @@ public class CoreService : ICoreService
     private const string PublisherName = "oecu";
     private const string ProductName = "SQLBasic_net";
     private const string RegistryBasePath = $@"Software\{PublisherName}\{ProductName}";
-    private const string RegistryServiceAccountsPath = $@"{RegistryBasePath}\ServiceAccounts";
     private const string RegistrySyntaxPath = $@"{RegistryBasePath}\Syntax";
     private const string RegistryDbPath = $@"{RegistryBasePath}\DB";
-    private const string JsonValueName = "json";
     #endregion
 
     public string GetRegistryBasePath() => RegistryBasePath;
 
     #region Colors
-    readonly Brush[] EditColor =
+    private readonly Brush[] _defaultColors =
         {
     // 背景 (黒に近いダークグレー)
     new SolidColorBrush(Color.FromArgb(0xff, 0x1e, 0x1e, 0x1e)),
@@ -63,7 +61,7 @@ public class CoreService : ICoreService
     #endregion
 
     #region Keyword
-    private readonly string[] SyntaxKeywords =
+    private readonly string[] _syntaxKeywords =
     {
         "ABORT","ACTION","ADD","AFTER","ALL","ALTER","ANALYZE","AND","AS","ASC","ATTACH","AUTOINCREMENT",
         "BEFORE","BEGIN","BETWEEN","BY",
@@ -84,7 +82,7 @@ public class CoreService : ICoreService
     #endregion
 
     #region 補完候補用のキーワード
-    private static readonly HashSet<string> SqlClauseKeywords = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _sqlClauseKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "on",
         "using",
@@ -102,15 +100,15 @@ public class CoreService : ICoreService
     #endregion
 
     private readonly IWindowProvider _windowProvider;
-    public string connectionString = string.Empty;
+    private string _connectionString = string.Empty;
     public CoreService(IWindowProvider windowProvider)
     {
         _windowProvider = windowProvider;
-        if (!CheckLocalDB())
+        if (!InitializeLocalDB())
         {
         }
     }
-    public bool CheckLocalDB()
+    public bool InitializeLocalDB()
     {
         bool result = false;
         try
@@ -138,7 +136,7 @@ public class CoreService : ICoreService
                 Directory.CreateDirectory(folderPath);
             }
             string dbPath = Path.Combine(folderPath, "local.db");
-            connectionString = $"Data Source={dbPath}";
+            _connectionString = $"Data Source={dbPath}";
             if (System.IO.File.Exists(dbPath))
             {
                 //DB ファイルはすでに存在している
@@ -148,10 +146,10 @@ public class CoreService : ICoreService
             else
             {
                 // データベースとテーブルの作成
-                using (var connection = new SqliteConnection(connectionString))
+                using (var connection = new SqliteConnection(_connectionString))
                 {
                     connection.Open();
-                    connectionString = $"Data Source={dbPath}";
+                    _connectionString = $"Data Source={dbPath}";
                     result = true;
                 }
             }
@@ -162,19 +160,19 @@ public class CoreService : ICoreService
         }
         return result;
     }
-    public bool CheckOtherDB(string dbfilePath)
+    public bool ConnectToDb(string dbFilePath)
     {
         bool result = false;
         try
         {
             //データベース設定
-            if (!File.Exists(dbfilePath))
+            if (!File.Exists(dbFilePath))
             {
                 return result;
             }
-            connectionString = $"Data Source={dbfilePath}";
+            _connectionString = $"Data Source={dbFilePath}";
             // データベースとテーブルの作成
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
                 result = true;
@@ -188,7 +186,7 @@ public class CoreService : ICoreService
     }
 
 
-    public Brush GetSyntaxColor(int SyntaxNo)
+    public Brush GetSyntaxColor(int syntaxNo)
     {
         try
         {
@@ -197,31 +195,31 @@ public class CoreService : ICoreService
             {
                 dbKey = Registry.CurrentUser.CreateSubKey(RegistrySyntaxPath);
             }
-            string? col = dbKey.GetValue($"Color{SyntaxNo}") as string;
+            string? col = dbKey.GetValue($"Color{syntaxNo}") as string;
             if (string.IsNullOrWhiteSpace(col))
             {
-                var str = GetStringColorCode(EditColor[SyntaxNo]);
-                dbKey.SetValue($"Color{SyntaxNo}", str);
-                return EditColor[SyntaxNo];
+                var str = GetStringColorCode(_defaultColors[syntaxNo]);
+                dbKey.SetValue($"Color{syntaxNo}", str);
+                return _defaultColors[syntaxNo];
             }
             else
             {
                 var b = new BrushConverter().ConvertFromString(col);
                 if (b == null)
                 {
-                    var str = GetStringColorCode(EditColor[SyntaxNo]);
-                    dbKey.SetValue($"Color{SyntaxNo}", str);
-                    return EditColor[SyntaxNo];
+                    var str = GetStringColorCode(_defaultColors[syntaxNo]);
+                    dbKey.SetValue($"Color{syntaxNo}", str);
+                    return _defaultColors[syntaxNo];
                 }
                 return (Brush)b;
             }
         }
         catch
         {
-            return EditColor[SyntaxNo];
+            return _defaultColors[syntaxNo];
         }
     }
-    public bool SetSyntaxColor(int SyntaxNo, Brush brush)
+    public bool SetSyntaxColor(int syntaxNo, Brush brush)
     {
         try
         {
@@ -231,7 +229,7 @@ public class CoreService : ICoreService
                 string hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 var dbKey = Registry.CurrentUser.OpenSubKey(RegistrySyntaxPath, writable: true)
                 ?? Registry.CurrentUser.CreateSubKey(RegistrySyntaxPath);
-                dbKey?.SetValue($"Color{SyntaxNo}", hex, RegistryValueKind.String);
+                dbKey?.SetValue($"Color{syntaxNo}", hex, RegistryValueKind.String);
                 return true;
             }
             else
@@ -256,7 +254,7 @@ public class CoreService : ICoreService
         }
     }
 
-    public string GetSytaxXml(string[]? colors)
+    public string GetSyntaxXml(string[]? colors)
     {
         if (colors == null || colors.Length < 10)
         {
@@ -333,17 +331,17 @@ public class CoreService : ICoreService
         #endregion
 
         string xml = xml1;
-        foreach (var k in SyntaxKeywords)
+        foreach (var k in _syntaxKeywords)
         {
             xml += $"      <Word>{k}</Word>\r\n";
         }
         xml += xml2;
         return xml;
     }
-    public async Task<List<string>> GetTableNames()
+    public async Task<List<string>> GetTableNamesAsync()
     {
         // データベースとテーブルの作成
-        using (var connection = new SqliteConnection(connectionString))
+        using (var connection = new SqliteConnection(_connectionString))
         {
             #region sql001
             string sql001 = @"
@@ -361,13 +359,13 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return result;
         }
     }
-    public (string, TokenKind tokenKind) CheckSQL(string SQL)
+    public (string, TokenKind tokenKind) CheckSql(string sql)
     {
         try
         {
-            var p = new Parser(SQL);
+            var p = new Parser(sql);
             var statement = p.ParseStatement();
-            var lex = new Lexer(SQL);
+            var lex = new Lexer(sql);
             Token firstToken = lex.NextToken();
             if (firstToken.Kind == TokenKind.Select)
             {
@@ -389,18 +387,18 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (err.Message, TokenKind.EOF);
         }
     }
-    public async Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDBQuery(string SQL)
+    public async Task<(List<string?> Headers, List<object[]> Rows, string Message)> CallDbQueryAsync(string sql)
     {
         string Message = "";
         try
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new SqliteConnection(_connectionString))
             {
                 await connection.OpenAsync();
                 List<string?> header = new List<string?>();
                 using (var hcom = connection.CreateCommand())
                 {
-                    hcom.CommandText = SQL;
+                    hcom.CommandText = sql;
                     var hreader = await hcom.ExecuteReaderAsync(CommandBehavior.SchemaOnly);
                     var schema = hreader.GetSchemaTable();
                     if (schema != null)
@@ -410,7 +408,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                         .ToList();
                     }
                 }
-                IEnumerable<dynamic> reader = await connection.QueryAsync(SQL);
+                IEnumerable<dynamic> reader = await connection.QueryAsync(sql);
                 var rows = new List<object[]>();
                 foreach (var record in reader)
                 {
@@ -427,14 +425,14 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (new List<string?>(), new List<object[]>(), err.Message);
         }
     }
-    public async Task<(int AffectedRows, string Message)> CallDBExecute(string SQL)
+    public async Task<(int AffectedRows, string Message)> CallDbExecuteAsync(string sql)
     {
         try
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new SqliteConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var affectedRows = await connection.ExecuteAsync(SQL);
+                var affectedRows = await connection.ExecuteAsync(sql);
                 return (affectedRows, "");
             }
         }
@@ -443,13 +441,13 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (0, err.Message);
         }
     }
-    private IEnumerable<string> GetTableNamesOnEditor()
+    private List<string> GetTableNamesAsyncSync()
     {
         var tables = new List<string>();
 
         try
         {
-            using var connection = new SqliteConnection(connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
             const string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;";
@@ -469,14 +467,14 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             throw new Exception("DB への接続に失敗しました");
         }
     }
-    private IEnumerable<string> GetColumnNamesOnEditor(string tableName)
+    private List<string> GetColumnNamesSync(string tableName)
     {
         var columns = new List<string>();
         if (string.IsNullOrWhiteSpace(tableName))
             return columns;
         try
         {
-            using var connection = new SqliteConnection(connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
             using var command = new SqliteCommand($"PRAGMA table_info([{tableName}]);", connection);
@@ -493,14 +491,14 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
         return columns;
     }
-    public async Task<List<ColumnInfo>> GetColumnInfos(string tableName)
+    public async Task<List<ColumnInfo>> GetColumnInfosAsync(string tableName)
     {
         var result = new List<ColumnInfo>();
-        if (string.IsNullOrWhiteSpace(tableName) || string.IsNullOrWhiteSpace(connectionString))
+        if (string.IsNullOrWhiteSpace(tableName) || string.IsNullOrWhiteSpace(_connectionString))
             return result;
         try
         {
-            using var connection = new SqliteConnection(connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             using var command = new SqliteCommand($"PRAGMA table_info([{tableName}]);", connection);
             using var reader = await command.ExecuteReaderAsync();
@@ -518,7 +516,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         return result;
     }
 
-    public (IEnumerable<string>? Candidates, string Header) GetCandicateDatabaseItem(string documentText, int caretOffset)
+    public (IEnumerable<string>? Candidates, string Header) GetCandidateDatabaseItem(string documentText, int caretOffset)
     {
         if (string.IsNullOrEmpty(documentText))
             return (null, "");
@@ -537,7 +535,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             var tableName = ResolveTableName(tableAliases, alias);
             if (!string.IsNullOrEmpty(tableName))
             {
-                var filteredColumns = FilterByPrefix(GetColumnNamesOnEditor(tableName), columnPrefix);
+                var filteredColumns = FilterByPrefix(GetColumnNamesSync(tableName), columnPrefix);
                 return filteredColumns.Count > 0 ? (filteredColumns, LocalizationManager.Instance["Comp_ColumnHeader"]) : (null, "");
             }
             return (null, "");
@@ -549,7 +547,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         if (tableKeywordMatch.Success)
         {
             var tablePrefix = tableKeywordMatch.Groups[1].Value;
-            var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
+            var filteredTables = FilterByPrefix(GetTableNamesAsyncSync(), tablePrefix);
             return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
@@ -559,7 +557,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         if (afterTableMatch.Success)
         {
             var tablePrefix = afterTableMatch.Groups[1].Value;
-            var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
+            var filteredTables = FilterByPrefix(GetTableNamesAsyncSync(), tablePrefix);
             return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
@@ -577,7 +575,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                 // SELECT の列リストの次は必ず FROM なので常に候補に含める
                 var allColumns = new List<string> { "FROM" };
                 foreach (var table in tablesForColumns)
-                    allColumns.AddRange(GetColumnNamesOnEditor(table));
+                    allColumns.AddRange(GetColumnNamesSync(table));
 
                 var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
                 if (filteredColumns.Count > 0)
@@ -766,7 +764,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
 
         alias = alias.Trim();
-        if (!SqlClauseKeywords.Contains(alias) && !aliases.ContainsKey(alias))
+        if (!_sqlClauseKeywords.Contains(alias) && !aliases.ContainsKey(alias))
         {
             aliases[alias] = tableName;
         }

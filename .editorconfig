@@ -1,0 +1,5 @@
+# .editorconfig
+[*.cs]
+# Naming Conventions
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
+dotnet_naming_style.camel_case.capitalization = camel_case
