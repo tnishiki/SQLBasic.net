@@ -586,7 +586,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
 
         // SQL キーワード補完
-        var kwPrefix = Regex.Match(textBeforeCaret, @"([a-zA-Z_][a-zA-Z0-9_ ]*)$").Groups[1].Value.TrimEnd();
+        var kwPrefix = Regex.Match(textBeforeCaret, @"([a-zA-Z_][a-zA-Z0-9_]*)$").Groups[1].Value;
         var (kwCandidates, kwHeader) = GetSqlKeywordCandidates(textBeforeCaret, kwPrefix);
         if (kwCandidates.Count > 0)
             return (kwCandidates, kwHeader);
