@@ -104,5 +104,58 @@ public class RegistryTests
         }
     }
 
+    /*
+     * SetSyntaxColor でカラーを書き込み、レジストリに正しく保存されることを確認する
+     */
+    [Fact]
+    public void RegistryTest03()
+    {
+        string RegistryPath = _coreService.GetRegistryBasePath();
+        string RegistrySyntaxPath = $@"{RegistryPath}\Syntax";
+
+        var brush = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(0x12, 0x34, 0x56));
+
+        bool result = _coreService.SetSyntaxColor(0, brush);
+        Assert.True(result, "SetSyntaxColor が false を返しました。");
+
+        var dbKey = Registry.CurrentUser.OpenSubKey(RegistrySyntaxPath, writable: false);
+        if (dbKey == null)
+        {
+            Assert.Fail("レジストリのキーが存在しません。");
+        }
+
+        string? col = dbKey!.GetValue("Color0") as string;
+        Assert.Equal("#123456", col);
+    }
+
+    /*
+     * SetSyntaxColor で書き込んだカラーを GetSyntaxColor で読み戻せることを確認する
+     */
+    [Fact]
+    public void RegistryTest04()
+    {
+        var expected = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(0xAA, 0xBB, 0xCC));
+
+        _coreService.SetSyntaxColor(1, expected);
+
+        var actual = _coreService.GetSyntaxColor(1) as System.Windows.Media.SolidColorBrush;
+        Assert.NotNull(actual);
+        Assert.Equal(expected.Color.R, actual!.Color.R);
+        Assert.Equal(expected.Color.G, actual.Color.G);
+        Assert.Equal(expected.Color.B, actual.Color.B);
+    }
+
+    /*
+     * GetRegistryBasePath が期待するパスを返すことを確認する
+     */
+    [Fact]
+    public void RegistryTest05()
+    {
+        string path = _coreService.GetRegistryBasePath();
+        Assert.Equal(@"Software\oecu\SQLBasic_net", path);
+    }
+
 #endif
 }
