@@ -7,22 +7,9 @@
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         xmlns:local="clr-namespace:SQLBasic_net"
         mc:Ignorable="d"
-        Title="SQLBasic.net" Height="500" Width="1000">
-    <Window.Resources>
-        <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="#2D2D30"/>
-            <!-- トラック部分 -->
-            <Setter Property="Foreground" Value="#555"/>
-            <!-- グリップ -->
-            <Setter Property="BorderBrush" Value="#444"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        <Style TargetType="Thumb">
-            <Setter Property="Background" Value="#555"/>
-            <Setter Property="BorderBrush" Value="#777"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-    </Window.Resources>
+        Title="SQLBasic.net" Height="600" Width="1100"
+        Background="#1E1E1E">
+
     <Window.InputBindings>
         <!-- F5 実行 -->
         <KeyBinding Key="F5" Command="{Binding ExecuteCommand}" />
@@ -43,146 +30,166 @@
         <!-- Shift+Ctrl+K: 行コメント解除 -->
         <KeyBinding Modifiers="Ctrl+Shift" Key="K" Command="{Binding RemoveCommentCommand}"/>
     </Window.InputBindings>
-    <Grid Background="#1E1E1E">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#3E3E42"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ExecuteButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#2D8857"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="5,2"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#3CB371"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#333"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="RowBackground" Value="#252526"/>
+            <Setter Property="AlternatingRowBackground" Value="#2D2D30"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#333337"/>
+            <Setter Property="Foreground" Value="#BBB"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="42"/>
+            <RowDefinition Height="45"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
-        <ToolBarTray Grid.Row="0" Background="#2D2D30">
-            <ToolBar Background="#606060" BorderThickness="0" Padding="10,5">
-                <!-- 実行ボタン（強調） -->
-                <Button Command="{Binding ExecuteCommand}">
+
+        <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#111" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="5,0">
+                <Button Style="{StaticResource ExecuteButtonStyle}" Command="{Binding ExecuteCommand}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="▶" Foreground="#3CB371" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding [Btn_Execute_Text], Source={x:Static local:LocalizationManager.Instance}}" Foreground="White"/>
+                        <TextBlock Text="▶ " FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding [Btn_Execute_Text], Source={x:Static local:LocalizationManager.Instance}}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Separator/>
-                <!-- ファイル操作系 -->
-                <Button Content="{Binding [Btn_New], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding ClearCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Button Content="{Binding [Btn_Open], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding OpenCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Button Content="{Binding [Btn_Save], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SaveCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Button Content="{Binding [Btn_Export], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding CsvExportCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Separator/>
-                <!-- 表示設定系 -->
-                <Button Content="{Binding [Btn_Color], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SetSyntaxCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
 
-                <TextBlock Text="{Binding [Lbl_Font], Source={x:Static local:LocalizationManager.Instance}}" Foreground="White" VerticalAlignment="Center" Margin="10,0,5,0"/>
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="🔼" Command="{Binding FontToLargeCommand}"  Margin="2,0" Padding="2,2"/>
-                    <Button Content="🔽" Command="{Binding FontToSmallCommand}"  Margin="2,0" Padding="2,2"/>
+                <Rectangle Width="1" Fill="#444" Margin="10,8"/>
+
+                <Button Content="📄" ToolTip="{Binding [Btn_New], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding ClearCommand}"/>
+                <Button Content="📂" ToolTip="{Binding [Btn_Open], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding OpenCommand}"/>
+                <Button Content="💾" ToolTip="{Binding [Btn_Save], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SaveCommand}"/>
+                <Button Content="📤" ToolTip="{Binding [Btn_Export], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding CsvExportCommand}"/>
+
+                <Rectangle Width="1" Fill="#444" Margin="10,8"/>
+
+                <Button Content="🎨" ToolTip="{Binding [Btn_Color], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SetSyntaxCommand}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <Button Content="A+" ToolTip="{Binding [Btn_FontLarge], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding FontToLargeCommand}" Padding="5,2"/>
+                    <Button Content="a-" ToolTip="{Binding [Btn_FontSmall], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding FontToSmallCommand}" Padding="5,2"/>
                 </StackPanel>
-                <Separator/>
-                <Button Content="{Binding [Btn_Format], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding FormatDocumentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Button Content="{Binding [Btn_Comment], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SetCommentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-                <Button Content="{Binding [Btn_Uncomment], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding RemoveCommentCommand}" Foreground="White" Margin="2,0" Padding="8,4"/>
-            </ToolBar>
-        </ToolBarTray>
+
+                <Rectangle Width="1" Fill="#444" Margin="10,8"/>
+
+                <Button Content="{Binding [Btn_Format], Source={x:Static local:LocalizationManager.Instance}}" ToolTip="{Binding [Btn_Format], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding FormatDocumentCommand}"/>
+                <Button Content="{Binding [Btn_Comment], Source={x:Static local:LocalizationManager.Instance}}" ToolTip="{Binding [Btn_Comment], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding SetCommentCommand}"/>
+            </StackPanel>
+        </Border>
+
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="5*"/>
-                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="1*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
+
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="{Binding EditorRowHeight}"/>
+                    <RowDefinition Height="3*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="{Binding ResultRowHeight}"/>
-                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="2*"/>
                 </Grid.RowDefinitions>
-                <avalonEdit:TextEditor
-                    x:Name="SqlEditor"
-                    Grid.Row="0" Margin="6,3,4,7"
-                    Document ="{Binding SqlDocument, Mode=TwoWay}"
+
+                <avalonEdit:TextEditor x:Name="SqlEditor" Grid.Row="0"
+                    Document="{Binding SqlDocument, Mode=TwoWay}"
                     FontSize="{Binding FontSize}"
-                    FontFamily="Consolas"
-                    ShowLineNumbers ="True"
-                    Foreground="White"
-                    Background="{Binding EditorBackground}"
+                    FontFamily="Cascadia Code, Consolas"
+                    Background="#1E1E1E" Foreground="#D4D4D4"
+                    ShowLineNumbers="True" Margin="0,5,0,0"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Auto"
                     SyntaxHighlighting="{Binding SyntaxSet}"/>
-                <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="10" HorizontalAlignment="Stretch" Background="DarkGray"/>
-                <Grid Grid.Row="2">
+
+                <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="#333" Margin="0,2"/>
+
+                <Grid Grid.Row="2" Margin="5">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="25"/>
-                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="{Binding [Lbl_Results], Source={x:Static local:LocalizationManager.Instance}}" Foreground="White" VerticalAlignment="Bottom"/>
-                    <DataGrid Grid.Row="1" x:Name="QueryGrid" ItemsSource="{Binding GridItems}" HeadersVisibility="Column"
-                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333"
-                          RowBackground="Black"
-                          GridLinesVisibility="None"
-                          AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#2D2D30"/>
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                                <Setter Property="BorderBrush" Value="#444"/>
-                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
-                            </Style>
-                        </DataGrid.ColumnHeaderStyle>
-                    </DataGrid>
+                    <TextBlock Grid.Row="0" Text="{Binding [Lbl_Results], Source={x:Static local:LocalizationManager.Instance}}" Foreground="#888" FontSize="11" Margin="5,2"/>
+                    <DataGrid Grid.Row="1" x:Name="QueryGrid" ItemsSource="{Binding GridItems}" HeadersVisibility="Column" AutoGenerateColumns="False" IsReadOnly="True"/>
                 </Grid>
             </Grid>
-            <Grid Grid.Column="1" Background="#2D2D30">
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#252526"/>
+
+            <Grid Grid.Column="2" Background="#252526">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="35"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="5,0,5,0">
-                    <TextBlock Text="{Binding [Lbl_Tables], Source={x:Static local:LocalizationManager.Instance}}" VerticalAlignment="Bottom" Foreground="White"/>
-                </Grid>
-                <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" SelectedItem="{Binding SelectedTableName}" Margin="5,0,5,0"/>
-                <DataGrid Grid.Row="2" ItemsSource="{Binding ColumnInfos}" HeadersVisibility="Column"
-                          Foreground="White" Background="#1E1E1E" BorderBrush="#444" AlternatingRowBackground="#333333"
-                          RowBackground="Black"
-                          GridLinesVisibility="None"
-                          AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
-                    <DataGrid.ColumnHeaderStyle>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="#2D2D30"/>
-                            <Setter Property="Foreground" Value="White"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="BorderBrush" Value="#444"/>
-                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
-                        </Style>
-                    </DataGrid.ColumnHeaderStyle>
+
+                <TextBlock Grid.Row="0" Text="{Binding [Lbl_Tables], Source={x:Static local:LocalizationManager.Instance}}" Foreground="#569CD6" FontWeight="Bold" Margin="10,10,10,5" FontSize="11"/>
+                <ListBox Grid.Row="1" ItemsSource="{Binding TableNames}" SelectedItem="{Binding SelectedTableName}"
+                         Background="Transparent" BorderThickness="0" Foreground="#CCC" Margin="5"/>
+
+                <TextBlock Grid.Row="2" Text="{Binding [Lbl_Columns], Source={x:Static local:LocalizationManager.Instance}}" Foreground="#569CD6" FontWeight="Bold" Margin="10,10,10,5" FontSize="11"/>
+                <DataGrid Grid.Row="3" ItemsSource="{Binding ColumnInfos}" HeadersVisibility="Column" AutoGenerateColumns="False" Margin="5" IsReadOnly="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Name}">
-                            <DataGridTextColumn.Header>
-                                <TextBlock Text="{Binding [Col_ColumnName], Source={x:Static local:LocalizationManager.Instance}}"/>
-                            </DataGridTextColumn.Header>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding DataType}">
-                            <DataGridTextColumn.Header>
-                                <TextBlock Text="{Binding [Col_DataType], Source={x:Static local:LocalizationManager.Instance}}"/>
-                            </DataGridTextColumn.Header>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding IsNullable}">
-                            <DataGridTextColumn.Header>
-                                <TextBlock Text="{Binding [Col_Nullable], Source={x:Static local:LocalizationManager.Instance}}"/>
-                            </DataGridTextColumn.Header>
-                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="{Binding [Col_ColumnName], Source={x:Static local:LocalizationManager.Instance}}" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="{Binding [Col_DataType], Source={x:Static local:LocalizationManager.Instance}}" Binding="{Binding DataType}" Width="Auto"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <Button Grid.Row="3" Content="{Binding [Btn_ConnectDb], Source={x:Static local:LocalizationManager.Instance}}" Command="{Binding ConnectDbCommand}" Margin="5,5,5,5"/>
-                <!-- 言語選択 -->
-                <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,5,5,5">
-                    <TextBlock Text="{Binding [Lbl_Language], Source={x:Static local:LocalizationManager.Instance}}" Foreground="White" VerticalAlignment="Center" Margin="5,0,5,0"/>
-                    <ComboBox ItemsSource="{Binding LanguageItems}" SelectedItem="{Binding SelectedLanguage}" DisplayMemberPath="Display" Width="120"/>
+
+                <StackPanel Grid.Row="4" Margin="10">
+                    <Button Content="{Binding [Btn_ConnectDb], Source={x:Static local:LocalizationManager.Instance}}" ToolTip="{Binding [Btn_ConnectDb], Source={x:Static local:LocalizationManager.Instance}}" Style="{StaticResource ExecuteButtonStyle}" Background="#3E3E42" Margin="0,0,0,10" Command="{Binding ConnectDbCommand}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding [Lbl_Language], Source={x:Static local:LocalizationManager.Instance}}" Foreground="#CCC" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding LanguageItems}" SelectedItem="{Binding SelectedLanguage}" DisplayMemberPath="Display" Width="100"/>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>
-        <StatusBar Grid.Row="2" Background="#2D2D30" Foreground="White">
-            <StatusBarItem Content="{Binding [Lbl_Count], Source={x:Static local:LocalizationManager.Instance}}"/>
-            <StatusBarItem Content="{Binding DataNum}"/>
-            <StatusBarItem Content="{Binding [Lbl_CountUnit], Source={x:Static local:LocalizationManager.Instance}}"/>
-            <Separator/>
-            <StatusBarItem Content="{Binding [Lbl_Message], Source={x:Static local:LocalizationManager.Instance}}"/>
+
+        <StatusBar Grid.Row="2" Background="#007ACC" Foreground="White">
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding [Lbl_Count], Source={x:Static local:LocalizationManager.Instance}}" Opacity="0.8"/>
+                    <TextBlock Text="{Binding DataNum}" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding [Lbl_CountUnit], Source={x:Static local:LocalizationManager.Instance}}" Opacity="0.8" Margin="2,0,0,0"/>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator Background="#44FFFFFF"/>
             <StatusBarItem Content="{Binding SqlMessage}"/>
         </StatusBar>
     </Grid>
