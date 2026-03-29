@@ -19,39 +19,39 @@ namespace SQLBasic_net.ViewModels;
 public partial class SetSyntaxViewModel : ObservableObject
 {
     #region LabelName
-    readonly string[] LabelName = {
+    private readonly string[] _labelName = {
             "背景","数値","コメント","句読点","文字列","ラベル","キーワード","関数","カラム","コメント内(TODO,FIXME","コメント内(HACK,UNDONE)"
         };
     #endregion
 
     [ObservableProperty]
-    private ColorState _SelectColorPicker = new ColorState()
+    private ColorState _selectColorPicker = new ColorState()
     {
         A = 1,
         RGB_B = 1,
     };
     [ObservableProperty]
-    private TextDocument _SampleText = new TextDocument();
+    private TextDocument _sampleText = new TextDocument();
 
     [ObservableProperty]
-    private Brush _BackGround = Brushes.Black;
+    private Brush _backGround = Brushes.Black;
 
     [ObservableProperty]
-    private IHighlightingDefinition? _SyntaxSet;
+    private IHighlightingDefinition? _syntaxSet;
 
     [ObservableProperty]
-    private List<SyntaxItem> _SyntaxList = new List<SyntaxItem>();
+    private List<SyntaxItem> _syntaxList = new List<SyntaxItem>();
 
     [ObservableProperty]
-    private SyntaxItem? _SelectSyntaxItem = new SyntaxItem();
+    private SyntaxItem? _selectSyntaxItem = new SyntaxItem();
 
-    private ICoreService coreService;
+    private readonly ICoreService _coreService;
 
     public Action? WindowClose;
 
-    public SetSyntaxViewModel(ICoreService _coreService)
+    public SetSyntaxViewModel(ICoreService coreService)
     {
-        coreService = _coreService;
+        _coreService = coreService;
 
         #region エディタの設定
         SampleText.Text = @"/* aaa */
@@ -68,7 +68,7 @@ order by a.aaa
 
         for (int i = 0; i < 11; i++)
         {
-            SyntaxList.Add(new SyntaxItem() { No = i, Name = LabelName[i], Color = coreService.GetSyntaxColor(i) });
+            SyntaxList.Add(new SyntaxItem() { No = i, Name = _labelName[i], Color = _coreService.GetSyntaxColor(i) });
         }
 
         ChangeColor();
@@ -78,7 +78,7 @@ order by a.aaa
     {
         foreach (var item in SyntaxList)
         {
-            coreService.SetSyntaxColor(item.No, item.Color);
+            _coreService.SetSyntaxColor(item.No, item.Color);
         }
         WindowClose?.Invoke();
     }
@@ -98,10 +98,10 @@ order by a.aaa
         {
             if (item.No == 0)
                 continue;
-            c.Add(coreService.GetStringColorCode(item.Color));
+            c.Add(_coreService.GetStringColorCode(item.Color));
         }
 
-        var xml = coreService.GetSyntaxXml(c.ToArray());
+        var xml = _coreService.GetSyntaxXml(c.ToArray());
         using (var stringReader = new System.IO.StringReader(xml))
         {
             using (var reader = XmlReader.Create(stringReader))

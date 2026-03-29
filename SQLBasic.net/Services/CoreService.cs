@@ -441,7 +441,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             return (0, err.Message);
         }
     }
-    private List<string> GetTableNamesAsyncSync()
+    private List<string> GetTableNamesForCompletion()
     {
         var tables = new List<string>();
 
@@ -547,7 +547,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         if (tableKeywordMatch.Success)
         {
             var tablePrefix = tableKeywordMatch.Groups[1].Value;
-            var filteredTables = FilterByPrefix(GetTableNamesAsyncSync(), tablePrefix);
+            var filteredTables = FilterByPrefix(GetTableNamesForCompletion(), tablePrefix);
             return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
@@ -557,7 +557,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         if (afterTableMatch.Success)
         {
             var tablePrefix = afterTableMatch.Groups[1].Value;
-            var filteredTables = FilterByPrefix(GetTableNamesAsyncSync(), tablePrefix);
+            var filteredTables = FilterByPrefix(GetTableNamesForCompletion(), tablePrefix);
             return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
