@@ -11,6 +11,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using Microsoft.Win32;
 using SQLBasic_net.Datas;
 using SQLBasic_net.Services;
+using System.Collections.Generic;
 using SQLBasic_net.Views;
 using System.Text;
 using CsvHelper;
@@ -85,11 +86,28 @@ public partial class MainWindowViewModel : ObservableObject
 
     public TextEditor? SqlEditor = null;
 
+    public List<LanguageItem> LanguageItems { get; } = new()
+    {
+        new() { Code = "ja", Display = "日本語" },
+        new() { Code = "en", Display = "English" },
+        new() { Code = "zh-CN", Display = "简体中文" },
+        new() { Code = "es", Display = "Español" },
+    };
+
+    [ObservableProperty]
+    private LanguageItem? _selectedLanguage;
+
+    partial void OnSelectedLanguageChanged(LanguageItem? value)
+    {
+        if (value != null)
+            LocalizationManager.Instance.SetLanguage(value.Code);
+    }
 
     public MainWindowViewModel(IWindowProvider _windowProvider, ICoreService _coreService)
     {
         windowProvider = _windowProvider;
         coreService = _coreService;
+        _selectedLanguage = LanguageItems[0];
     }
 
     public async Task GetTableNames()
@@ -180,15 +198,16 @@ public partial class MainWindowViewModel : ObservableObject
             : @"\bDROP\s+(TABLE|INDEX|VIEW|TRIGGER)\s+(?:IF\s+EXISTS\s+)?([a-zA-Z0-9_]+)";
 
         var match = Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
-        if (!match.Success) return ("オブジェクト", "");
+        if (!match.Success) return (LocalizationManager.Instance["Obj_Default"], "");
 
+        var L = LocalizationManager.Instance;
         var typeMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["TABLE"]        = "テーブル",
-            ["INDEX"]        = "インデックス",
-            ["UNIQUE INDEX"] = "ユニークインデックス",
-            ["VIEW"]         = "ビュー",
-            ["TRIGGER"]      = "トリガー",
+            ["TABLE"]        = L["Obj_Table"],
+            ["INDEX"]        = L["Obj_Index"],
+            ["UNIQUE INDEX"] = L["Obj_UniqueIndex"],
+            ["VIEW"]         = L["Obj_View"],
+            ["TRIGGER"]      = L["Obj_Trigger"],
         };
 
         var rawType = Regex.Replace(match.Groups[1].Value.Trim(), @"\s+", " ");
@@ -266,7 +285,7 @@ public partial class MainWindowViewModel : ObservableObject
                         ResultRowHeight = new System.Windows.GridLength(0, System.Windows.GridUnitType.Star);
                     }
 
-                    SQLMessage = $"{DataNum} 件のデータがヒットしました";
+                    SQLMessage = string.Format(LocalizationManager.Instance["Msg_SelectHit"], DataNum);
                 });
             }
         }
@@ -279,7 +298,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             else
             {
-                SQLMessage = $"{affectedRows} 件のデータを入力しました";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_InsertDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Update)
@@ -291,7 +310,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             else
             {
-                SQLMessage = $"{affectedRows} 件のデータを更新しました";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_UpdateDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Delete)
@@ -303,7 +322,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             else
             {
-                SQLMessage = $"{affectedRows} 件を削除しました";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_DeleteDone"], affectedRows);
             }
         }
         else if (token == TokenKind.Create)
@@ -316,7 +335,7 @@ public partial class MainWindowViewModel : ObservableObject
             else
             {
                 var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: true);
-                SQLMessage = $"{objectType} {objectName} を作成しました";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_CreateDone"], objectType, objectName);
             }
             await GetTableNames();
         }
@@ -330,7 +349,7 @@ public partial class MainWindowViewModel : ObservableObject
             else
             {
                 var (objectType, objectName) = ParseDdlTarget(currentQuery, isCreate: false);
-                SQLMessage = $"{objectType} {objectName} を削除しました";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_DropDone"], objectType, objectName);
             }
             await GetTableNames();
         }
@@ -397,8 +416,8 @@ public partial class MainWindowViewModel : ObservableObject
             // ファイルダイアログを表示
             var dialog = new OpenFileDialog
             {
-                Title = "SQL ファイルを開く",
-                Filter = "SQL ファイル (*.sql)|*.sql|テキスト ファイル (*.txt)|*.txt|すべてのファイル (*.*)|*.*",
+                Title = LocalizationManager.Instance["Dlg_OpenSqlTitle"],
+                Filter = LocalizationManager.Instance["Dlg_OpenSqlFilter"],
                 DefaultExt = ".sql",
                 AddExtension = true,
             };
@@ -414,7 +433,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = $"ファイルを開く際にエラーが発生しました。\n{ex.Message}";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_OpenError"], ex.Message);
             });
         }
     }
@@ -426,8 +445,8 @@ public partial class MainWindowViewModel : ObservableObject
             // 保存ダイアログを表示
             var dialog = new SaveFileDialog
             {
-                Title = "SQL ファイルの保存",
-                Filter = "SQL ファイル (*.sql)|*.sql|テキスト ファイル (*.txt)|*.txt|すべてのファイル (*.*)|*.*",
+                Title = LocalizationManager.Instance["Dlg_SaveSqlTitle"],
+                Filter = LocalizationManager.Instance["Dlg_SaveSqlFilter"],
                 DefaultExt = ".sql",
                 FileName = $"{DateTime.Now.ToString("yyyy-MM-dd-HHmm_")}query.sql",
                 AddExtension = true,
@@ -444,7 +463,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    SQLMessage = $"保存しました: {dialog.FileName}";
+                    SQLMessage = string.Format(LocalizationManager.Instance["Msg_SaveDone"], dialog.FileName);
                 });
             }
         }
@@ -452,7 +471,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = $"ファイル保存中にエラーが発生しました。\n{ex.Message}";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_SaveError"], ex.Message);
             });
         }
     }
@@ -465,7 +484,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    SQLMessage = "エクスポートできるデータがありません。";
+                    SQLMessage = LocalizationManager.Instance["Msg_NoExportData"];
                 });
                 return;
             }
@@ -473,8 +492,8 @@ public partial class MainWindowViewModel : ObservableObject
             // ファイル保存ダイアログ
             var dialog = new SaveFileDialog
             {
-                Title = "CSVファイルの保存",
-                Filter = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*",
+                Title = LocalizationManager.Instance["Dlg_SaveCsvTitle"],
+                Filter = LocalizationManager.Instance["Dlg_SaveCsvFilter"],
                 DefaultExt = ".csv",
                 FileName = $"{DateTime.Now.ToString("yyyy-MM-dd-HHmm_")}query.csv",
                 AddExtension = true,
@@ -517,7 +536,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = $"CSVとしてエクスポートしました: {dialog.FileName}";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_ExportDone"], dialog.FileName);
             });
 
             if (File.Exists(dialog.FileName))
@@ -529,7 +548,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                SQLMessage = $"CSVエクスポート中にエラーが発生しました。\n{ex.Message}";
+                SQLMessage = string.Format(LocalizationManager.Instance["Msg_ExportError"], ex.Message);
             });
         }
     }
@@ -580,8 +599,8 @@ public partial class MainWindowViewModel : ObservableObject
         // ファイルダイアログを表示
         var dialog = new OpenFileDialog
         {
-            Title = "SQLIte の DB ファイルを開く",
-            Filter = "SQLite DB ファイル (*.db)|*.db|すべてのファイル (*.*)|*.*",
+            Title = LocalizationManager.Instance["Dlg_OpenDbTitle"],
+            Filter = LocalizationManager.Instance["Dlg_OpenDbFilter"],
             DefaultExt = ".sql",
             AddExtension = true,
         };

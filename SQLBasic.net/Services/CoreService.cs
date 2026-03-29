@@ -5,6 +5,7 @@ using System.Windows.Media;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Win32;
+using SQLBasic_net;
 using SQLBasic_net.Datas;
 using SQLBasic_net.Services;
 
@@ -537,7 +538,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
             if (!string.IsNullOrEmpty(tableName))
             {
                 var filteredColumns = FilterByPrefix(GetColumnNamesOnEditor(tableName), columnPrefix);
-                return filteredColumns.Count > 0 ? (filteredColumns, "候補カラム") : (null, "");
+                return filteredColumns.Count > 0 ? (filteredColumns, LocalizationManager.Instance["Comp_ColumnHeader"]) : (null, "");
             }
             return (null, "");
         }
@@ -549,7 +550,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         {
             var tablePrefix = tableKeywordMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
-            return filteredTables.Count > 0 ? (filteredTables, "候補テーブル") : (null, "");
+            return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
         // DROP TABLE / ALTER TABLE / CREATE TABLE など TABLE キーワード直後はテーブル候補
@@ -559,7 +560,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         {
             var tablePrefix = afterTableMatch.Groups[1].Value;
             var filteredTables = FilterByPrefix(GetTableNamesOnEditor(), tablePrefix);
-            return filteredTables.Count > 0 ? (filteredTables, "候補テーブル") : (null, "");
+            return filteredTables.Count > 0 ? (filteredTables, LocalizationManager.Instance["Comp_TableHeader"]) : (null, "");
         }
 
         // SELECT ～ FROM の間ではカラム候補
@@ -580,7 +581,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
 
                 var filteredColumns = FilterByPrefix(allColumns, columnPrefix);
                 if (filteredColumns.Count > 0)
-                    return (filteredColumns, "候補カラム");
+                    return (filteredColumns, LocalizationManager.Instance["Comp_ColumnHeader"]);
             }
         }
 
@@ -629,7 +630,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
                 "CREATE TABLE", "CREATE INDEX", "CREATE VIEW",
                 "DROP TABLE", "DROP INDEX", "DROP VIEW",
                 "ALTER TABLE", "BEGIN", "COMMIT", "ROLLBACK", "EXPLAIN", "PRAGMA"
-            }, prefix), "候補");
+            }, prefix), LocalizationManager.Instance["Comp_KeywordHeader"]);
         }
 
         // 最後のキーワードトークンのインデックス
@@ -721,7 +722,7 @@ SELECT name FROM sqlite_master  WHERE type = 'table'   AND name NOT LIKE 'sqlite
         }
 
         var filtered = FilterByPrefix(keywords, prefix);
-        return (filtered, "候補");
+        return (filtered, LocalizationManager.Instance["Comp_KeywordHeader"]);
     }
 
     private Dictionary<string, string> ParseTableAliases(string text)
